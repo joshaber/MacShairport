@@ -82,10 +82,10 @@
 				8804C1E013620A310047E72E /* MacShairportAppDelegate.h */,
 				8804C1E113620A310047E72E /* MacShairportAppDelegate.m */,
 				1DDD58140DA1D0A300B32029 /* MainMenu.xib */,
-				8804C1E713620A4E0047E72E /* MSConnection.h */,
-				8804C1E813620A4E0047E72E /* MSConnection.m */,
 				8804C1E913620A4E0047E72E /* MSShairportServer.h */,
 				8804C1EA13620A4E0047E72E /* MSShairportServer.m */,
+				8804C1E713620A4E0047E72E /* MSConnection.h */,
+				8804C1E813620A4E0047E72E /* MSConnection.m */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
