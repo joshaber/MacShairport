@@ -705,7 +705,7 @@
 
         outbuf = (unsigned char *)malloc(RSA_size(privateRSA));
 
-        if(!(outlen = RSA_private_decrypt(inlen, input, outbuf, privateRSA, RSA_PKCS1_PADDING)))
+        if(!(outlen = RSA_private_decrypt(inlen, input, outbuf, privateRSA, RSA_PKCS1_OAEP_PADDING)))
         {
             NSLog(@"RSA_private_decrypt() failed!");
             return nil;

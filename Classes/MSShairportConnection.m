@@ -1,23 +1,20 @@
 //
-//  MSConnection.m
+//  MSShairportConnection.m
 //  MacShairport
 //
 //  Created by Josh Abernathy on 4/18/11.
 //  Copyright 2011 Josh Abernathy. All rights reserved.
 //
 
-#import "MSConnection.h"
+#import "MSShairportConnection.h"
 #import <netdb.h>
 
 void readStreamEventHandler(CFReadStreamRef stream, CFStreamEventType eventType, void *info);
 void writeStreamEventHandler(CFWriteStreamRef stream, CFStreamEventType eventType, void *info);
 
-@interface MSConnection ()
-@property (nonatomic, assign) CFSocketNativeHandle socketHandle;
+@interface MSShairportConnection ()
 @property (nonatomic, retain) NSMutableData *incomingData;
 @property (nonatomic, retain) NSMutableData *outgoingData;
-@property (nonatomic, assign) CFReadStreamRef readStream;
-@property (nonatomic, assign) CFWriteStreamRef writeStream;
 @property (nonatomic, assign) BOOL readStreamOpen;
 @property (nonatomic, assign) BOOL writeStreamOpen;
 @property (nonatomic, copy) NSString *remoteIP;
@@ -31,30 +28,42 @@ void writeStreamEventHandler(CFWriteStreamRef stream, CFStreamEventType eventTyp
 @end
 
 
-@implementation MSConnection
+@implementation MSShairportConnection
 
 
 #pragma mark API
 
 @synthesize delegate;
-@synthesize socketHandle;
-@synthesize readStream;
-@synthesize writeStream;
 @synthesize incomingData;
 @synthesize outgoingData;
 @synthesize readStreamOpen;
 @synthesize writeStreamOpen;
 @synthesize remoteIP;
+@synthesize aesIV;
+@synthesize aesKey;
+@synthesize fmtp;
 
-+ (MSConnection *)connectionWithSocketHandle:(CFSocketNativeHandle)handle addressData:(NSData *)addressData {
++ (MSShairportConnection *)connectionWithSocketHandle:(CFSocketNativeHandle)handle addressData:(NSData *)addressData {
 	return [[[self alloc] initWithSocketHandle:handle addressData:addressData] autorelease];
+}
+
+- (void)finalize {
+	if(readStream != NULL) {
+		CFRelease(readStream);
+	}
+	
+	if(writeStream != NULL) {
+		CFRelease(writeStream);
+	}
+	
+	[super finalize];
 }
 
 - (id)initWithSocketHandle:(CFSocketNativeHandle)handle addressData:(NSData *)addressData {
 	self = [super init];
 	if(self == nil) return nil;
 		
-	self.socketHandle = handle;
+	socketHandle = handle;
 		
 	if([addressData length] >= sizeof(struct sockaddr_in6)) {
 		char hostStr[NI_MAXHOST];
@@ -73,31 +82,28 @@ void writeStreamEventHandler(CFWriteStreamRef stream, CFStreamEventType eventTyp
 }
 
 - (BOOL)open {
-	CFStreamCreatePairWithSocket(kCFAllocatorDefault, self.socketHandle, &readStream, &writeStream);
+	CFStreamCreatePairWithSocket(kCFAllocatorDefault, socketHandle, &readStream, &writeStream);
 	
 	self.incomingData = [NSMutableData data];
 	self.outgoingData = [NSMutableData data];
 	
-	CFReadStreamSetProperty(self.readStream, kCFStreamPropertyShouldCloseNativeSocket, kCFBooleanTrue);
-	CFWriteStreamSetProperty(self.writeStream, kCFStreamPropertyShouldCloseNativeSocket, kCFBooleanTrue);
-	
-	NSMakeCollectable(self.readStream);
-	NSMakeCollectable(self.writeStream);
+	CFReadStreamSetProperty(readStream, kCFStreamPropertyShouldCloseNativeSocket, kCFBooleanTrue);
+	CFWriteStreamSetProperty(writeStream, kCFStreamPropertyShouldCloseNativeSocket, kCFBooleanTrue);
 	
 	CFOptionFlags registeredEvents = kCFStreamEventOpenCompleted | kCFStreamEventHasBytesAvailable | kCFStreamEventCanAcceptBytes | kCFStreamEventEndEncountered | kCFStreamEventErrorOccurred;
 	CFStreamClientContext context = {0, self, NULL, NULL, NULL};
-	CFReadStreamSetClient(self.readStream, registeredEvents, readStreamEventHandler, &context);
-	CFWriteStreamSetClient(self.writeStream, registeredEvents, writeStreamEventHandler, &context);
+	CFReadStreamSetClient(readStream, registeredEvents, readStreamEventHandler, &context);
+	CFWriteStreamSetClient(writeStream, registeredEvents, writeStreamEventHandler, &context);
 	
-	CFReadStreamScheduleWithRunLoop(self.readStream, CFRunLoopGetCurrent(), kCFRunLoopCommonModes);
-	CFWriteStreamScheduleWithRunLoop(self.writeStream, CFRunLoopGetCurrent(), kCFRunLoopCommonModes);
+	CFReadStreamScheduleWithRunLoop(readStream, CFRunLoopGetCurrent(), kCFRunLoopCommonModes);
+	CFWriteStreamScheduleWithRunLoop(writeStream, CFRunLoopGetCurrent(), kCFRunLoopCommonModes);
 	
-	Boolean success = CFReadStreamOpen(self.readStream);
+	Boolean success = CFReadStreamOpen(readStream);
 	if(!success) {
 		return NO;
 	}
 	
-	success = CFWriteStreamOpen(self.writeStream);
+	success = CFWriteStreamOpen(writeStream);
 	if(!success) {
 		return NO;
 	}
@@ -106,16 +112,18 @@ void writeStreamEventHandler(CFWriteStreamRef stream, CFStreamEventType eventTyp
 }
 
 - (void)close {	
-	if(self.readStream != nil) {
-		CFReadStreamUnscheduleFromRunLoop(self.readStream, CFRunLoopGetCurrent(), kCFRunLoopCommonModes);
-		CFReadStreamClose(self.readStream);
-		self.readStream = NULL;
+	if(readStream != nil) {
+		CFReadStreamUnscheduleFromRunLoop(readStream, CFRunLoopGetCurrent(), kCFRunLoopCommonModes);
+		CFReadStreamClose(readStream);
+		CFRelease(readStream);
+		readStream = NULL;
 	}
 	
 	if(writeStream != nil) {
-		CFWriteStreamUnscheduleFromRunLoop(self.writeStream, CFRunLoopGetCurrent(), kCFRunLoopCommonModes);
-		CFWriteStreamClose(self.writeStream);
-		self.writeStream = NULL;
+		CFWriteStreamUnscheduleFromRunLoop(writeStream, CFRunLoopGetCurrent(), kCFRunLoopCommonModes);
+		CFWriteStreamClose(writeStream);
+		CFRelease(writeStream);
+		writeStream = NULL;
 	}
 	
 	self.incomingData = nil;
@@ -127,8 +135,8 @@ void writeStreamEventHandler(CFWriteStreamRef stream, CFStreamEventType eventTyp
 }
 
 void readStreamEventHandler(CFReadStreamRef stream, CFStreamEventType eventType, void *info) {
-	MSConnection *connection = info;
-	[connection readStreamHandleEvent:eventType];
+	id self = info;
+	[self readStreamHandleEvent:eventType];
 }
 
 - (void)readStreamHandleEvent:(CFStreamEventType)event {
@@ -143,8 +151,8 @@ void readStreamEventHandler(CFReadStreamRef stream, CFStreamEventType eventType,
 }
 
 - (void)readFromStreamIntoIncomingBuffer {
-	while(CFReadStreamHasBytesAvailable(self.readStream)) {
-		UInt8 buffer[1024];
+	while(CFReadStreamHasBytesAvailable(readStream)) {
+		UInt8 buffer[512];
 		CFIndex length = CFReadStreamRead(readStream, buffer, sizeof(buffer));
 		if(length <= 0) {
 			[self close];
@@ -161,7 +169,7 @@ void readStreamEventHandler(CFReadStreamRef stream, CFStreamEventType eventType,
 }
 
 void writeStreamEventHandler(CFWriteStreamRef stream, CFStreamEventType eventType, void *info) {
-	MSConnection *connection = info;
+	MSShairportConnection *connection = info;
 	[connection writeStreamHandleEvent:eventType];
 }
 
@@ -185,11 +193,11 @@ void writeStreamEventHandler(CFWriteStreamRef stream, CFStreamEventType eventTyp
 		return;
 	}
 	
-	if(!CFWriteStreamCanAcceptBytes(self.writeStream)) { 
+	if(!CFWriteStreamCanAcceptBytes(writeStream)) { 
 		return;
 	}
 	
-	CFIndex writtenBytes = CFWriteStreamWrite(self.writeStream, [self.outgoingData bytes], (CFIndex) [self.outgoingData length]);
+	CFIndex writtenBytes = CFWriteStreamWrite(writeStream, [self.outgoingData bytes], (CFIndex) [self.outgoingData length]);
 	if(writtenBytes == -1) {
 		[self close];
 		[self.delegate connectionDidClose:self];

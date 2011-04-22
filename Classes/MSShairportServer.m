@@ -21,20 +21,21 @@ static const int MSShairportServerPort = 5000;
 // The MAC address doesn't actually have to be right, just has to be a valid format.
 static NSString * const MSShairportServerMACAddress = @"fe:dc:ba:98:76:53";
 
+static SSCrypto *crypto = nil;
+
 @interface MSShairportServer ()
 @property (nonatomic, copy) NSString *name;
 @property (nonatomic, copy) NSString *password;
 @property (nonatomic, retain) NSMutableArray *connections;
 @property (nonatomic, retain) NSNetService *netService;
-@property (nonatomic, assign) CFSocketRef listeningSocket;
 
 - (BOOL)createServer;
 - (BOOL)publishService;
 - (void)unpublishService;
 - (void)shutdownServer;
 - (NSDictionary *)responseDictionaryFromRawString:(NSString *)string;
-- (void)respondToRequest:(NSDictionary *)request connection:(MSConnection *)connection;
-- (NSString *)generateAppleResponseFromChallenge:(NSString *)challenge connection:(MSConnection *)connection;
+- (void)respondToRequest:(NSDictionary *)request connection:(MSShairportConnection *)connection;
+- (NSString *)generateAppleResponseFromChallenge:(NSString *)challenge connection:(MSShairportConnection *)connection;
 - (NSString *)MACAddressToRawString;
 - (NSArray *)MACAddressComponents;
 @end
@@ -42,10 +43,26 @@ static NSString * const MSShairportServerMACAddress = @"fe:dc:ba:98:76:53";
 
 @implementation MSShairportServer
 
+- (void)finalize {
+	if(listeningSocket != NULL) {
+		CFRelease(listeningSocket);
+	}
+	
+	[super finalize];
+}
 
-#pragma mark MSConnectionDelegate
++ (void)initialize {
+	if(self == [MSShairportServer class]) {
+		NSString *path = [[NSBundle mainBundle] pathForResource:@"airport_rsa" ofType:@""];
+		NSData *key = [[NSData alloc] initWithContentsOfFile:path];
+		crypto = [[SSCrypto alloc] initWithPrivateKey:key];
+	}
+}
 
-- (void)connection:(MSConnection *)connection didReceiveData:(NSData *)data {
+
+#pragma mark MSShairportConnectionDelegate
+
+- (void)connection:(MSShairportConnection *)connection didReceiveData:(NSData *)data {
 	NSString *contents = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
 	DebugLog(@"Raw request: %@", contents);
 	
@@ -56,7 +73,7 @@ static NSString * const MSShairportServerMACAddress = @"fe:dc:ba:98:76:53";
 	[self respondToRequest:request connection:connection];
 }
 
-- (void)connectionDidClose:(MSConnection *)connection {	
+- (void)connectionDidClose:(MSShairportConnection *)connection {
 	[self.connections removeObject:connection];
 }
 
@@ -81,13 +98,21 @@ static NSString * const MSShairportServerMACAddress = @"fe:dc:ba:98:76:53";
 @synthesize connections;
 @synthesize netService;
 @synthesize delegate;
-@synthesize listeningSocket;
 
 + (MSShairportServer *)serverWithName:(NSString *)name password:(NSString *)password {
 	MSShairportServer *server = [[[self alloc] init] autorelease];
 	server.name = name;
 	server.password = password;
 	return server;
+}
+
+- (id)init {
+	self = [super init];
+	if(self == nil) return nil;
+	
+	self.connections = [NSMutableArray array];
+	
+	return self;
 }
 
 - (BOOL)start:(NSError **)error {
@@ -108,19 +133,19 @@ static NSString * const MSShairportServerMACAddress = @"fe:dc:ba:98:76:53";
 
 - (BOOL)createServer {
 	CFSocketContext socketContext = {0, self, NULL, NULL, NULL};
-	self.listeningSocket = CFSocketCreate(kCFAllocatorDefault, PF_INET6, SOCK_STREAM, IPPROTO_TCP, kCFSocketAcceptCallBack, (CFSocketCallBack) &serverAcceptCallback, &socketContext);
-	NSMakeCollectable(self.listeningSocket);
-	if(self.listeningSocket == NULL) {
+	listeningSocket = CFSocketCreate(kCFAllocatorDefault, PF_INET6, SOCK_STREAM, IPPROTO_TCP, kCFSocketAcceptCallBack, (CFSocketCallBack) &serverAcceptCallback, &socketContext);
+	if(listeningSocket == NULL) {
 		return NO;
 	}
 	
 	int existingValue = 1;
-	int fileDescriptor = CFSocketGetNative(self.listeningSocket);
+	int fileDescriptor = CFSocketGetNative(listeningSocket);
 	int err = setsockopt(fileDescriptor, SOL_SOCKET, SO_REUSEADDR, (void *) &existingValue, sizeof(existingValue));
 	if(err != 0) {
 		DebugLog(@"Wasn't able to set socket options");
 		
-		self.listeningSocket = NULL;
+		CFRelease(listeningSocket);
+		listeningSocket = NULL;
 		
 		return NO;
 	}
@@ -136,16 +161,17 @@ static NSString * const MSShairportServerMACAddress = @"fe:dc:ba:98:76:53";
 	CFDataRef addressData = CFDataCreate(NULL, (const UInt8 *)&address, sizeof(address));
 	[(id) addressData autorelease];
 	
-	CFSocketError error = CFSocketSetAddress(self.listeningSocket, addressData);
+	CFSocketError error = CFSocketSetAddress(listeningSocket, addressData);
 	if(error != kCFSocketSuccess) {
 		DebugLog(@"Unable to set the socket address.");
 		
-		self.listeningSocket = NULL;
+		CFRelease(listeningSocket);
+		listeningSocket = NULL;
 		
 		return NO;
 	}
 	
-	CFRunLoopSourceRef runLoopSource = CFSocketCreateRunLoopSource(kCFAllocatorDefault, self.listeningSocket, 0);
+	CFRunLoopSourceRef runLoopSource = CFSocketCreateRunLoopSource(kCFAllocatorDefault, listeningSocket, 0);
 	CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, kCFRunLoopCommonModes);
 	CFRelease(runLoopSource);
 	
@@ -162,7 +188,7 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 	NSData *addressData = (NSData *) address;
 	CFSocketNativeHandle nativeSocketHandle = *(CFSocketNativeHandle *)data;
 	
-	MSConnection *newConnection = [MSConnection connectionWithSocketHandle:nativeSocketHandle addressData:addressData];
+	MSShairportConnection *newConnection = [MSShairportConnection connectionWithSocketHandle:nativeSocketHandle addressData:addressData];
 	[server.connections addObject:newConnection];
 	newConnection.delegate = server;
 	
@@ -173,7 +199,7 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 	}
 }
 
-- (void)respondToRequest:(NSDictionary *)request connection:(MSConnection *)connection {
+- (void)respondToRequest:(NSDictionary *)request connection:(MSShairportConnection *)connection {
 	NSString *responseHeader = @"RTSP/1.0 200 OK";
 	
 	NSMutableDictionary *response = [NSMutableDictionary dictionary];
@@ -194,21 +220,103 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 	if([method hasPrefix:@"OPTIONS"]) {
 		[response setObject:@"ANNOUNCE, SETUP, RECORD, PAUSE, FLUSH, TEARDOWN, OPTIONS, GET_PARAMETER, SET_PARAMETER" forKey:@"Public"];
 	} else if([method hasPrefix:@"ANNOUNCE"]) {
-		// TODO: parse AESIV and AESKEY
+		NSMutableDictionary *body = [NSMutableDictionary dictionary];
+		[[request objectForKey:@"Body"] enumerateLinesUsingBlock:^(NSString *line, BOOL *stop) {
+			NSArray *pieces = [line componentsSeparatedByString:@"="];
+			if(pieces.count >= 2) {				
+				NSMutableArray *remainingPieces = [pieces mutableCopy];
+				[remainingPieces removeObjectAtIndex:0];
+				NSString *value = [remainingPieces componentsJoinedByString:@""];
+				pieces = [value componentsSeparatedByString:@":"];
+				
+				if(pieces.count >= 2) {
+					[body setObject:[pieces objectAtIndex:1] forKey:[pieces objectAtIndex:0]];
+				}
+			}
+		}];
+		
+		NSString *aesIV = [body objectForKey:@"aesiv"];
+		NSParameterAssert(aesIV != nil);
+		connection.aesIV = [[NSString alloc] initWithData:[NSData dataFromBase64String:aesIV] encoding:NSISOLatin1StringEncoding];
+		
+		NSString *rsaaesKey = [body objectForKey:@"rsaaeskey"];
+		NSParameterAssert(rsaaesKey != nil);
+		
+		rsaaesKey = [[NSString alloc] initWithData:[NSData dataFromBase64String:rsaaesKey] encoding:NSISOLatin1StringEncoding];
+		[crypto setCipherText:[rsaaesKey dataUsingEncoding:NSISOLatin1StringEncoding]];
+		NSString *aesKey = [[NSString alloc] initWithData:[crypto decrypt] encoding:NSISOLatin1StringEncoding];
+		NSParameterAssert(aesKey != nil);
+		connection.aesKey = aesKey;
+		
+		connection.fmtp = [body objectForKey:@"fmtp"];
 	} else if([method hasPrefix:@"SETUP"]) {
-		// TODO: parse transport settings and spawn hairtunes
+		NSString *transport = [request objectForKey:@"Transport"];
+		
+		// RTP/AVP/UDP;unicast;interleaved=0-1;mode=record;control_port=6001;timing_port=6002
+		NSArray *pieces = [transport componentsSeparatedByString:@";"];
+		NSMutableDictionary *transportValues = [NSMutableDictionary dictionary];
+		for(NSString *piece in pieces) {
+			NSArray *pair = [piece componentsSeparatedByString:@"="];
+			if(pair.count >= 2) {
+				[transportValues setObject:[pair objectAtIndex:1] forKey:[pair objectAtIndex:0]];
+			}
+		}
+		
+		NSString *cport = [transportValues objectForKey:@"control_port"];
+		NSString *tport = [transportValues objectForKey:@"timing_port"];
+		NSString *dport = [transportValues objectForKey:@"server_port"];
+		
+		NSMutableString *iv = [NSMutableString string];
+		for(NSUInteger i = 0; i < [connection.aesIV length]; i++) {
+			[iv appendFormat:@"%x", CFSwapInt32HostToBig([connection.aesIV characterAtIndex:i])];
+		}
+		
+		NSMutableString *key = [NSMutableString string];
+		for(NSUInteger i = 0; i < [connection.aesKey length]; i++) {
+			[key appendFormat:@"%x", CFSwapInt32HostToBig([connection.aesKey characterAtIndex:i])];
+		}
+		
+		NSString *path = [[NSBundle mainBundle] pathForAuxiliaryExecutable:@"hairtunes"];
+		NSTask *task = [[NSTask alloc] init];
+		[task setLaunchPath:path];
+		[task setArguments:[NSArray arrayWithObjects:@"iv", iv, @"key", key, @"fmtp", connection.fmtp, @"cport", cport, @"tport", tport, @"dport", dport, nil]];
+		
+		NSPipe *outputPipe = [NSPipe pipe];
+		[task setStandardOutput:outputPipe];
+		NSFileHandle *outputFileHandle = [outputPipe fileHandleForReading];
+		[task launch];
+		
+		NSString *serverPort = @"";
+		while(YES) {
+			NSData *data = [outputFileHandle availableData];
+			NSString *output = [[NSString alloc] initWithData:data encoding:NSASCIIStringEncoding];
+			if([output hasPrefix:@"port: "]) {
+				NSString *portString = [output stringByReplacingOccurrencesOfString:@"port: " withString:@""];
+				serverPort = [portString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+				break;
+			}
+			
+			if(![task isRunning]) {
+				break;
+			}
+			
+			[[NSRunLoop currentRunLoop] runUntilDate:[NSDate distantPast]];
+		}
+		
+		[response setObject:@"DEADBEEF" forKey:@"Session"];
+		[response setObject:[NSString stringWithFormat:@"%@;server_port=%lu", transport, serverPort] forKey:@"Transport"];
 	} else if([method hasPrefix:@"RECORD"]) {
 		// TODO: umm... nothing?
 	} else if([method hasPrefix:@"FLUSH"]) {
 		// TODO: flush hairtunes
 	} else if([method hasPrefix:@"TEARDOWN"]) {
-		// TODO: close connections
+		[response setObject:@"close" forKey:@"Connection"];
 	} else if([method hasPrefix:@"SET_PARAMETER"]) {
 		// TODO: pass along to hairtunes
 	} else if([method hasPrefix:@"GET_PARAMETER"]) {
 		// TODO: nothing?
 	} else if([method hasPrefix:@"DENIED"]) {
-		// shit
+		// awww shit
 	} else {
 		DebugLog(@"Unknown method: %@", method);
 	}
@@ -272,7 +380,7 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 	return dictionary;
 }
 
-- (NSString *)generateAppleResponseFromChallenge:(NSString *)challenge connection:(MSConnection *)connection {
+- (NSString *)generateAppleResponseFromChallenge:(NSString *)challenge connection:(MSShairportConnection *)connection {
 	NSData *challengeData = [NSData dataFromBase64String:challenge];
 	NSMutableString *challengeString = [[[NSString alloc] initWithData:challengeData encoding:NSISOLatin1StringEncoding] mutableCopy];
 	
@@ -306,10 +414,6 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 		[challengeString appendFormat:@"%C", [component decimalValueFromHex]];
 	}
 	
-	NSString *path = [[NSBundle mainBundle] pathForResource:@"airport_rsa" ofType:@""];
-	NSData *key = [[NSData alloc] initWithContentsOfFile:path];
-	
-	SSCrypto *crypto = [[SSCrypto alloc] initWithPrivateKey:key];
 	[crypto setClearTextWithData:[challengeString dataUsingEncoding:NSISOLatin1StringEncoding]];
 	NSData *encryptedTextData = [crypto sign];
 	
@@ -320,9 +424,10 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 }
 
 - (void)shutdownServer {
-	if(self.listeningSocket != NULL) {
-		CFSocketInvalidate(self.listeningSocket);
-		self.listeningSocket = NULL;
+	if(listeningSocket != NULL) {
+		CFSocketInvalidate(listeningSocket);
+		CFRelease(listeningSocket);
+		listeningSocket = NULL;
 	}
 }
 

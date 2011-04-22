@@ -7,7 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
-#import "MSConnection.h"
+#import "MSShairportConnection.h"
 
 @protocol MSShairportServerDelegate <NSObject>
 // If fatal == YES then the server has already been stopped by the time the delegate receives this message.
@@ -15,7 +15,9 @@
 @end
 
 
-@interface MSShairportServer : NSObject <NSNetServiceDelegate, MSConnectionDelegate> {}
+@interface MSShairportServer : NSObject <NSNetServiceDelegate, MSShairportConnectionDelegate> {
+	CFSocketRef listeningSocket;
+}
 
 @property (nonatomic, assign) __weak id<MSShairportServerDelegate> delegate;
 

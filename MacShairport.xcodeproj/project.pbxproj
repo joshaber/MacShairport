@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		1DDD58160DA1D0A300B32029 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DDD58140DA1D0A300B32029 /* MainMenu.xib */; };
 		8804C1E213620A310047E72E /* MacShairportAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 8804C1E113620A310047E72E /* MacShairportAppDelegate.m */; };
-		8804C1EB13620A4E0047E72E /* MSConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 8804C1E813620A4E0047E72E /* MSConnection.m */; };
+		8804C1EB13620A4E0047E72E /* MSShairportConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 8804C1E813620A4E0047E72E /* MSShairportConnection.m */; };
 		8804C1EC13620A4E0047E72E /* MSShairportServer.m in Sources */ = {isa = PBXBuildFile; fileRef = 8804C1EA13620A4E0047E72E /* MSShairportServer.m */; };
 		8804C1EF13620A720047E72E /* NSString+MSExtensions.m in Sources */ = {isa = PBXBuildFile; fileRef = 8804C1EE13620A720047E72E /* NSString+MSExtensions.m */; };
 		886A42CE1360F34500F6C6E4 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 886A42CD1360F34500F6C6E4 /* SystemConfiguration.framework */; };
@@ -46,8 +46,8 @@
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		8804C1E013620A310047E72E /* MacShairportAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MacShairportAppDelegate.h; path = Classes/MacShairportAppDelegate.h; sourceTree = "<group>"; };
 		8804C1E113620A310047E72E /* MacShairportAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MacShairportAppDelegate.m; path = Classes/MacShairportAppDelegate.m; sourceTree = "<group>"; };
-		8804C1E713620A4E0047E72E /* MSConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MSConnection.h; path = Classes/MSConnection.h; sourceTree = "<group>"; };
-		8804C1E813620A4E0047E72E /* MSConnection.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MSConnection.m; path = Classes/MSConnection.m; sourceTree = "<group>"; };
+		8804C1E713620A4E0047E72E /* MSShairportConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MSShairportConnection.h; path = Classes/MSShairportConnection.h; sourceTree = "<group>"; };
+		8804C1E813620A4E0047E72E /* MSShairportConnection.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MSShairportConnection.m; path = Classes/MSShairportConnection.m; sourceTree = "<group>"; };
 		8804C1E913620A4E0047E72E /* MSShairportServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MSShairportServer.h; path = Classes/MSShairportServer.h; sourceTree = "<group>"; };
 		8804C1EA13620A4E0047E72E /* MSShairportServer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MSShairportServer.m; path = Classes/MSShairportServer.m; sourceTree = "<group>"; };
 		8804C1ED13620A720047E72E /* NSString+MSExtensions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSString+MSExtensions.h"; path = "Classes/NSString+MSExtensions.h"; sourceTree = "<group>"; };
@@ -84,8 +84,8 @@
 				1DDD58140DA1D0A300B32029 /* MainMenu.xib */,
 				8804C1E913620A4E0047E72E /* MSShairportServer.h */,
 				8804C1EA13620A4E0047E72E /* MSShairportServer.m */,
-				8804C1E713620A4E0047E72E /* MSConnection.h */,
-				8804C1E813620A4E0047E72E /* MSConnection.m */,
+				8804C1E713620A4E0047E72E /* MSShairportConnection.h */,
+				8804C1E813620A4E0047E72E /* MSShairportConnection.m */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -243,7 +243,7 @@
 				88704263135DF0E000C2092A /* NSData+Base64.m in Sources */,
 				88704344135E034700C2092A /* SSCrypto.m in Sources */,
 				8804C1E213620A310047E72E /* MacShairportAppDelegate.m in Sources */,
-				8804C1EB13620A4E0047E72E /* MSConnection.m in Sources */,
+				8804C1EB13620A4E0047E72E /* MSShairportConnection.m in Sources */,
 				8804C1EC13620A4E0047E72E /* MSShairportServer.m in Sources */,
 				8804C1EF13620A720047E72E /* NSString+MSExtensions.m in Sources */,
 			);
