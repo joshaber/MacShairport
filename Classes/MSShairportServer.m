@@ -13,6 +13,7 @@
 #import "NSData+Base64.h"
 #import "SSCrypto.h"
 #import "NSString+MSExtensions.h"
+#import "NSData+MSExtensions.h"
 
 static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, CFDataRef address, const void *data, void *info);
 
@@ -305,25 +306,8 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 	NSString *tport = [transportValues objectForKey:@"timing_port"];
 	NSString *dport = [transportValues objectForKey:@"server_port"];
 	
-	const char *str = [connection.aesIV cStringUsingEncoding:NSASCIIStringEncoding];
-	NSUInteger len = [connection.aesIV lengthOfBytesUsingEncoding:NSASCIIStringEncoding];
-	
-	NSMutableString *iv = [NSMutableString string];
-	for(NSUInteger i = 0; i < len; i++) {
-		char chu = upperToHex(str[i]);
-		char chl = lowerToHex(str[i]);
-		[iv appendFormat:@"%c%c", chu, chl];
-	}
-	
-	str = [connection.aesKey cStringUsingEncoding:NSASCIIStringEncoding];
-	len = [connection.aesKey lengthOfBytesUsingEncoding:NSASCIIStringEncoding];
-	
-	NSMutableString *key = [NSMutableString string];
-	for(NSUInteger i = 0; i < len; i++) {
-		char chu = upperToHex(str[i]);
-		char chl = lowerToHex(str[i]);
-		[key appendFormat:@"%c%c", chu, chl];
-	}
+	NSString *iv = [connection.aesIV stringWithHexBytes];
+	NSString *key = [connection.aesKey stringWithHexBytes];
 	
 	NSString *path = [[NSBundle mainBundle] pathForAuxiliaryExecutable:@"hairtunes"];
 	NSTask *task = [[NSTask alloc] init];

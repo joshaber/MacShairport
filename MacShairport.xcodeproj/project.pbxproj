@@ -7,15 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1DDD58160DA1D0A300B32029 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DDD58140DA1D0A300B32029 /* MainMenu.xib */; };
-		8804C1E213620A310047E72E /* MacShairportAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 8804C1E113620A310047E72E /* MacShairportAppDelegate.m */; };
-		8804C1EB13620A4E0047E72E /* MSShairportConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 8804C1E813620A4E0047E72E /* MSShairportConnection.m */; };
-		8804C1EC13620A4E0047E72E /* MSShairportServer.m in Sources */ = {isa = PBXBuildFile; fileRef = 8804C1EA13620A4E0047E72E /* MSShairportServer.m */; };
-		8804C1EF13620A720047E72E /* NSString+MSExtensions.m in Sources */ = {isa = PBXBuildFile; fileRef = 8804C1EE13620A720047E72E /* NSString+MSExtensions.m */; };
 		886A42CE1360F34500F6C6E4 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 886A42CD1360F34500F6C6E4 /* SystemConfiguration.framework */; };
-		88704263135DF0E000C2092A /* NSData+Base64.m in Sources */ = {isa = PBXBuildFile; fileRef = 88704262135DF0E000C2092A /* NSData+Base64.m */; settings = {COMPILER_FLAGS = "-w"; }; };
 		887042DC135DFCAD00C2092A /* airport_rsa in Resources */ = {isa = PBXBuildFile; fileRef = 88704297135DF89800C2092A /* airport_rsa */; };
-		88704344135E034700C2092A /* SSCrypto.m in Sources */ = {isa = PBXBuildFile; fileRef = 88704343135E034700C2092A /* SSCrypto.m */; settings = {COMPILER_FLAGS = "-w"; }; };
+		889B03B013653B3E0030E6CC /* NSData+Base64.m in Sources */ = {isa = PBXBuildFile; fileRef = 889B03A913653B3E0030E6CC /* NSData+Base64.m */; settings = {COMPILER_FLAGS = "-w"; }; };
+		889B03B113653B3E0030E6CC /* NSData+MSExtensions.m in Sources */ = {isa = PBXBuildFile; fileRef = 889B03AB13653B3E0030E6CC /* NSData+MSExtensions.m */; };
+		889B03B213653B3E0030E6CC /* NSString+MSExtensions.m in Sources */ = {isa = PBXBuildFile; fileRef = 889B03AD13653B3E0030E6CC /* NSString+MSExtensions.m */; };
+		889B03B313653B3E0030E6CC /* SSCrypto.m in Sources */ = {isa = PBXBuildFile; fileRef = 889B03AF13653B3E0030E6CC /* SSCrypto.m */; settings = {COMPILER_FLAGS = "-w"; }; };
+		889B03BD13653B560030E6CC /* MacShairportAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 889B03B813653B560030E6CC /* MacShairportAppDelegate.m */; };
+		889B03BE13653B560030E6CC /* MSShairportConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 889B03BA13653B560030E6CC /* MSShairportConnection.m */; };
+		889B03BF13653B560030E6CC /* MSShairportServer.m in Sources */ = {isa = PBXBuildFile; fileRef = 889B03BC13653B560030E6CC /* MSShairportServer.m */; };
+		889B03C413653B730030E6CC /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 889B03C213653B730030E6CC /* MainMenu.xib */; };
 		88DF8CA5135D327900E1AF2C /* hairtunes in CopyFiles */ = {isa = PBXBuildFile; fileRef = 88DF8CA1135D326200E1AF2C /* hairtunes */; };
 		8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
 		8D11072D0486CEB800E47090 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; settings = {ATTRIBUTES = (); }; };
@@ -39,25 +40,27 @@
 		089C165DFE840E0CC02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		13E42FB307B3F0F600E4EEF1 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = /System/Library/Frameworks/CoreData.framework; sourceTree = "<absolute>"; };
-		1DDD58150DA1D0A300B32029 /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		256AC3F00F4B6AF500CF3369 /* MacShairport_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MacShairport_Prefix.pch; sourceTree = "<group>"; };
 		29B97316FDCFA39411CA2CEA /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
-		8804C1E013620A310047E72E /* MacShairportAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MacShairportAppDelegate.h; path = Classes/MacShairportAppDelegate.h; sourceTree = "<group>"; };
-		8804C1E113620A310047E72E /* MacShairportAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MacShairportAppDelegate.m; path = Classes/MacShairportAppDelegate.m; sourceTree = "<group>"; };
-		8804C1E713620A4E0047E72E /* MSShairportConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MSShairportConnection.h; path = Classes/MSShairportConnection.h; sourceTree = "<group>"; };
-		8804C1E813620A4E0047E72E /* MSShairportConnection.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MSShairportConnection.m; path = Classes/MSShairportConnection.m; sourceTree = "<group>"; };
-		8804C1E913620A4E0047E72E /* MSShairportServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MSShairportServer.h; path = Classes/MSShairportServer.h; sourceTree = "<group>"; };
-		8804C1EA13620A4E0047E72E /* MSShairportServer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MSShairportServer.m; path = Classes/MSShairportServer.m; sourceTree = "<group>"; };
-		8804C1ED13620A720047E72E /* NSString+MSExtensions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSString+MSExtensions.h"; path = "Classes/NSString+MSExtensions.h"; sourceTree = "<group>"; };
-		8804C1EE13620A720047E72E /* NSString+MSExtensions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSString+MSExtensions.m"; path = "Classes/NSString+MSExtensions.m"; sourceTree = "<group>"; };
 		886A42CD1360F34500F6C6E4 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
-		88704261135DF0E000C2092A /* NSData+Base64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSData+Base64.h"; path = "Classes/NSData+Base64.h"; sourceTree = "<group>"; };
-		88704262135DF0E000C2092A /* NSData+Base64.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSData+Base64.m"; path = "Classes/NSData+Base64.m"; sourceTree = "<group>"; };
 		88704297135DF89800C2092A /* airport_rsa */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = airport_rsa; sourceTree = "<group>"; };
-		88704342135E034700C2092A /* SSCrypto.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SSCrypto.h; path = Classes/SSCrypto.h; sourceTree = "<group>"; };
-		88704343135E034700C2092A /* SSCrypto.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SSCrypto.m; path = Classes/SSCrypto.m; sourceTree = "<group>"; };
+		889B03A813653B3E0030E6CC /* NSData+Base64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSData+Base64.h"; sourceTree = "<group>"; };
+		889B03A913653B3E0030E6CC /* NSData+Base64.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSData+Base64.m"; sourceTree = "<group>"; };
+		889B03AA13653B3E0030E6CC /* NSData+MSExtensions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSData+MSExtensions.h"; sourceTree = "<group>"; };
+		889B03AB13653B3E0030E6CC /* NSData+MSExtensions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSData+MSExtensions.m"; sourceTree = "<group>"; };
+		889B03AC13653B3E0030E6CC /* NSString+MSExtensions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+MSExtensions.h"; sourceTree = "<group>"; };
+		889B03AD13653B3E0030E6CC /* NSString+MSExtensions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+MSExtensions.m"; sourceTree = "<group>"; };
+		889B03AE13653B3E0030E6CC /* SSCrypto.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SSCrypto.h; sourceTree = "<group>"; };
+		889B03AF13653B3E0030E6CC /* SSCrypto.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SSCrypto.m; sourceTree = "<group>"; };
+		889B03B713653B560030E6CC /* MacShairportAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MacShairportAppDelegate.h; sourceTree = "<group>"; };
+		889B03B813653B560030E6CC /* MacShairportAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MacShairportAppDelegate.m; sourceTree = "<group>"; };
+		889B03B913653B560030E6CC /* MSShairportConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MSShairportConnection.h; sourceTree = "<group>"; };
+		889B03BA13653B560030E6CC /* MSShairportConnection.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MSShairportConnection.m; sourceTree = "<group>"; };
+		889B03BB13653B560030E6CC /* MSShairportServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MSShairportServer.h; sourceTree = "<group>"; };
+		889B03BC13653B560030E6CC /* MSShairportServer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MSShairportServer.m; sourceTree = "<group>"; };
+		889B03C313653B730030E6CC /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/MainMenu.xib; sourceTree = SOURCE_ROOT; };
 		88DF8CA1135D326200E1AF2C /* hairtunes */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = hairtunes; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* MacShairport-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "MacShairport-Info.plist"; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* MacShairport.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacShairport.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -79,15 +82,15 @@
 		080E96DDFE201D6D7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
-				8804C1E013620A310047E72E /* MacShairportAppDelegate.h */,
-				8804C1E113620A310047E72E /* MacShairportAppDelegate.m */,
-				1DDD58140DA1D0A300B32029 /* MainMenu.xib */,
-				8804C1E913620A4E0047E72E /* MSShairportServer.h */,
-				8804C1EA13620A4E0047E72E /* MSShairportServer.m */,
-				8804C1E713620A4E0047E72E /* MSShairportConnection.h */,
-				8804C1E813620A4E0047E72E /* MSShairportConnection.m */,
+				889B03B713653B560030E6CC /* MacShairportAppDelegate.h */,
+				889B03B813653B560030E6CC /* MacShairportAppDelegate.m */,
+				889B03C213653B730030E6CC /* MainMenu.xib */,
+				889B03BB13653B560030E6CC /* MSShairportServer.h */,
+				889B03BC13653B560030E6CC /* MSShairportServer.m */,
+				889B03B913653B560030E6CC /* MSShairportConnection.h */,
+				889B03BA13653B560030E6CC /* MSShairportConnection.m */,
 			);
-			name = Classes;
+			path = Classes;
 			sourceTree = "<group>";
 		};
 		1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */ = {
@@ -120,7 +123,7 @@
 		29B97314FDCFA39411CA2CEA /* MacShairport */ = {
 			isa = PBXGroup;
 			children = (
-				8870425D135DF0D900C2092A /* Support */,
+				8870425D135DF0D900C2092A /* Extensions */,
 				080E96DDFE201D6D7F000001 /* Classes */,
 				29B97315FDCFA39411CA2CEA /* Other Sources */,
 				29B97317FDCFA39411CA2CEA /* Resources */,
@@ -159,17 +162,20 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		8870425D135DF0D900C2092A /* Support */ = {
+		8870425D135DF0D900C2092A /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
-				88704261135DF0E000C2092A /* NSData+Base64.h */,
-				88704262135DF0E000C2092A /* NSData+Base64.m */,
-				88704342135E034700C2092A /* SSCrypto.h */,
-				88704343135E034700C2092A /* SSCrypto.m */,
-				8804C1ED13620A720047E72E /* NSString+MSExtensions.h */,
-				8804C1EE13620A720047E72E /* NSString+MSExtensions.m */,
+				889B03A813653B3E0030E6CC /* NSData+Base64.h */,
+				889B03A913653B3E0030E6CC /* NSData+Base64.m */,
+				889B03AA13653B3E0030E6CC /* NSData+MSExtensions.h */,
+				889B03AB13653B3E0030E6CC /* NSData+MSExtensions.m */,
+				889B03AC13653B3E0030E6CC /* NSString+MSExtensions.h */,
+				889B03AD13653B3E0030E6CC /* NSString+MSExtensions.m */,
+				889B03AE13653B3E0030E6CC /* SSCrypto.h */,
+				889B03AF13653B3E0030E6CC /* SSCrypto.m */,
 			);
-			name = Support;
+			name = Extensions;
+			path = Classes;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -228,7 +234,7 @@
 			files = (
 				887042DC135DFCAD00C2092A /* airport_rsa in Resources */,
 				8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */,
-				1DDD58160DA1D0A300B32029 /* MainMenu.xib in Resources */,
+				889B03C413653B730030E6CC /* MainMenu.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -240,12 +246,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				8D11072D0486CEB800E47090 /* main.m in Sources */,
-				88704263135DF0E000C2092A /* NSData+Base64.m in Sources */,
-				88704344135E034700C2092A /* SSCrypto.m in Sources */,
-				8804C1E213620A310047E72E /* MacShairportAppDelegate.m in Sources */,
-				8804C1EB13620A4E0047E72E /* MSShairportConnection.m in Sources */,
-				8804C1EC13620A4E0047E72E /* MSShairportServer.m in Sources */,
-				8804C1EF13620A720047E72E /* NSString+MSExtensions.m in Sources */,
+				889B03B013653B3E0030E6CC /* NSData+Base64.m in Sources */,
+				889B03B113653B3E0030E6CC /* NSData+MSExtensions.m in Sources */,
+				889B03B213653B3E0030E6CC /* NSString+MSExtensions.m in Sources */,
+				889B03B313653B3E0030E6CC /* SSCrypto.m in Sources */,
+				889B03BD13653B560030E6CC /* MacShairportAppDelegate.m in Sources */,
+				889B03BE13653B560030E6CC /* MSShairportConnection.m in Sources */,
+				889B03BF13653B560030E6CC /* MSShairportServer.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -260,10 +267,10 @@
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
 		};
-		1DDD58140DA1D0A300B32029 /* MainMenu.xib */ = {
+		889B03C213653B730030E6CC /* MainMenu.xib */ = {
 			isa = PBXVariantGroup;
 			children = (
-				1DDD58150DA1D0A300B32029 /* English */,
+				889B03C313653B730030E6CC /* English */,
 			);
 			name = MainMenu.xib;
 			sourceTree = "<group>";
