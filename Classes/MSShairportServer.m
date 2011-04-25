@@ -201,38 +201,6 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 	}
 }
 
-
-char nibbleToHex(int nibble);
-char upperToHex(int byteVal);
-char upperToHex(int byteVal)
-{
-    int i = (byteVal & 0xF0) >> 4;
-    return nibbleToHex(i);
-}
-
-char lowerToHex(int byteVal);
-char lowerToHex(int byteVal)
-{
-    int i = (byteVal & 0x0F);
-    return nibbleToHex(i);
-}
-
-char nibbleToHex(int nibble)
-{
-    const int ascii_zero = 48;
-    const int ascii_a = 65;
-	
-    if((nibble >= 0) && (nibble <= 9))
-    {
-        return (char) (nibble + ascii_zero);
-    }
-    if((nibble >= 10) && (nibble <= 15))
-    {
-        return (char) (nibble - 10 + ascii_a);
-    }
-    return '?';
-}
-
 - (void)respondToRequest:(NSDictionary *)request connection:(MSShairportConnection *)connection {
 	NSString *responseHeader = @"RTSP/1.0 200 OK";
 	NSMutableDictionary *response = [NSMutableDictionary dictionary];
@@ -288,8 +256,9 @@ char nibbleToHex(int nibble)
 }
 
 - (void)handleAnnounceRequest:(NSDictionary *)request connection:(MSShairportConnection *)connection {
+	NSString *bodyString = [request objectForKey:@"Body"];
 	NSMutableDictionary *body = [NSMutableDictionary dictionary];
-	[[request objectForKey:@"Body"] enumerateLinesUsingBlock:^(NSString *line, BOOL *stop) {
+	[bodyString enumerateLinesUsingBlock:^(NSString *line, BOOL *stop) {
 		NSArray *pieces = [line componentsSeparatedByString:@"="];
 		if(pieces.count >= 2) {				
 			NSMutableArray *remainingPieces = [pieces mutableCopy];
@@ -305,14 +274,14 @@ char nibbleToHex(int nibble)
 	
 	NSString *aesIV = [body objectForKey:@"aesiv"];
 	NSParameterAssert(aesIV != nil);
-	connection.aesIV = [[NSString alloc] initWithData:[NSData dataFromBase64String:aesIV] encoding:NSISOLatin1StringEncoding];
+	connection.aesIV = [NSData dataFromBase64String:aesIV];
 	
 	NSString *rsaaesKey = [body objectForKey:@"rsaaeskey"];
 	NSParameterAssert(rsaaesKey != nil);
 	
 	rsaaesKey = [[NSString alloc] initWithData:[NSData dataFromBase64String:rsaaesKey] encoding:NSISOLatin1StringEncoding];
 	[crypto setCipherText:[rsaaesKey dataUsingEncoding:NSISOLatin1StringEncoding]];
-	NSString *aesKey = [[NSString alloc] initWithData:[crypto decrypt] encoding:NSISOLatin1StringEncoding];
+	NSData *aesKey = [crypto decrypt];
 	NSParameterAssert(aesKey != nil);
 	connection.aesKey = aesKey;
 	
@@ -364,6 +333,7 @@ char nibbleToHex(int nibble)
 	NSPipe *outputPipe = [NSPipe pipe];
 	[task setStandardOutput:outputPipe];
 	NSFileHandle *outputFileHandle = [outputPipe fileHandleForReading];
+	
 	[task launch];
 	
 	NSString *serverPort = @"";

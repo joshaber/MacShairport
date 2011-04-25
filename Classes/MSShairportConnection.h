@@ -24,8 +24,8 @@
 
 @property (nonatomic, assign) __weak id<MSShairportConnectionDelegate> delegate;
 @property (nonatomic, copy, readonly) NSString *remoteIP;
-@property (nonatomic, copy) NSString *aesIV;
-@property (nonatomic, copy) NSString *aesKey;
+@property (nonatomic, retain) NSData *aesIV;
+@property (nonatomic, retain) NSData *aesKey;
 @property (nonatomic, copy) NSString *fmtp;
 
 + (MSShairportConnection *)connectionWithSocketHandle:(CFSocketNativeHandle)handle addressData:(NSData *)addressData;
