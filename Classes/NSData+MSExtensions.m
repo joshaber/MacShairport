@@ -13,7 +13,7 @@
 
 // from http://www.iphonedevsdk.com/forum/iphone-sdk-development/32828-nsdata-hex-string.html
 - (NSString *)stringWithHexBytes {
-	static const char hexdigits[] = "0123456789ABCDEF";
+	static const char hexdigits[] = "0123456789abcdef";
 	const NSUInteger numBytes = [self length];
 	const unsigned char *bytes = [self bytes];
 	char *strbuf = (char *) malloc(numBytes * 2 + 1);
