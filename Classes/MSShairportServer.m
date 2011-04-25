@@ -315,7 +315,7 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 	NSString *path = [[NSBundle mainBundle] pathForAuxiliaryExecutable:@"hairtunes"];
 	NSTask *task = [[NSTask alloc] init];
 	[task setLaunchPath:path];
-	[task setArguments:[NSArray arrayWithObjects:@"tport", [NSString stringWithFormat:@"%@", tport], @"iv", [NSString stringWithFormat:@"%@", iv], @"cport", [NSString stringWithFormat:@"%@", cport], @"fmtp", [NSString stringWithFormat:@"'%@'", connection.fmtp], @"dport", [NSString stringWithFormat:@"%@", dport], @"key", [NSString stringWithFormat:@"%@", key], nil]];
+	[task setArguments:[NSArray arrayWithObjects:@"tport", [NSString stringWithFormat:@"%@", tport], @"iv", [NSString stringWithFormat:@"%@", iv], @"cport", [NSString stringWithFormat:@"%@", cport], @"fmtp", [NSString stringWithFormat:@"%@", connection.fmtp], @"dport", [NSString stringWithFormat:@"%@", dport], @"key", [NSString stringWithFormat:@"%@", key], nil]];
 	
 	NSPipe *outputPipe = [NSPipe pipe];
 	[task setStandardOutput:outputPipe];
@@ -323,15 +323,21 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 	
 	[task launch];
 	
-	NSString *serverPort = @"";
+	__block NSString *serverPort = @"";
 	while(YES) {
 		NSData *data = [outputFileHandle availableData];
 		NSString *output = [[NSString alloc] initWithData:data encoding:NSASCIIStringEncoding];
-		if([output hasPrefix:@"port: "]) {
-			NSString *portString = [output stringByReplacingOccurrencesOfString:@"port: " withString:@""];
-			serverPort = [portString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-			break;
-		}
+		__block BOOL done = NO;
+		[output enumerateLinesUsingBlock:^(NSString *line, BOOL *stop) {
+			if([line hasPrefix:@"port: "]) {
+				NSString *portString = [line stringByReplacingOccurrencesOfString:@"port: " withString:@""];
+				serverPort = [portString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+				done = YES;
+				*stop = YES;
+			}
+		}];
+		
+		if(done) break;
 		
 		if(![task isRunning]) {
 			break;
@@ -341,7 +347,7 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 	}
 	
 	[response setObject:@"DEADBEEF" forKey:@"Session"];
-	[response setObject:[NSString stringWithFormat:@"%@;server_port=%lu", transport, serverPort] forKey:@"Transport"];
+	[response setObject:[NSString stringWithFormat:@"%@;server_port=%@", transport, serverPort] forKey:@"Transport"];
 }
 
 - (void)stop {
