@@ -35,6 +35,8 @@ static SSCrypto *crypto = nil;
 - (void)shutdownServer;
 - (NSDictionary *)responseDictionaryFromRawString:(NSString *)string;
 - (void)respondToRequest:(NSDictionary *)request connection:(MSShairportConnection *)connection;
+- (void)handleAnnounceRequest:(NSDictionary *)request connection:(MSShairportConnection *)connection;
+- (void)handleSetupRequest:(NSDictionary *)request connection:(MSShairportConnection *)connection response:(NSMutableDictionary *)response;
 - (NSString *)generateAppleResponseFromChallenge:(NSString *)challenge connection:(MSShairportConnection *)connection;
 - (NSString *)MACAddressToRawString;
 - (NSArray *)MACAddressComponents;
@@ -230,9 +232,9 @@ char nibbleToHex(int nibble)
     }
     return '?';
 }
+
 - (void)respondToRequest:(NSDictionary *)request connection:(MSShairportConnection *)connection {
 	NSString *responseHeader = @"RTSP/1.0 200 OK";
-	
 	NSMutableDictionary *response = [NSMutableDictionary dictionary];
 	[response setObject:[request objectForKey:@"CSeq"] forKey:@"CSeq"];
 	[response setObject:@"connected; type=analog" forKey:@"Audio-Jack-Status"];
@@ -251,101 +253,9 @@ char nibbleToHex(int nibble)
 	if([method hasPrefix:@"OPTIONS"]) {
 		[response setObject:@"ANNOUNCE, SETUP, RECORD, PAUSE, FLUSH, TEARDOWN, OPTIONS, GET_PARAMETER, SET_PARAMETER" forKey:@"Public"];
 	} else if([method hasPrefix:@"ANNOUNCE"]) {
-		NSMutableDictionary *body = [NSMutableDictionary dictionary];
-		[[request objectForKey:@"Body"] enumerateLinesUsingBlock:^(NSString *line, BOOL *stop) {
-			NSArray *pieces = [line componentsSeparatedByString:@"="];
-			if(pieces.count >= 2) {				
-				NSMutableArray *remainingPieces = [pieces mutableCopy];
-				[remainingPieces removeObjectAtIndex:0];
-				NSString *value = [remainingPieces componentsJoinedByString:@""];
-				pieces = [value componentsSeparatedByString:@":"];
-				
-				if(pieces.count >= 2) {
-					[body setObject:[pieces objectAtIndex:1] forKey:[pieces objectAtIndex:0]];
-				}
-			}
-		}];
-		
-		NSString *aesIV = [body objectForKey:@"aesiv"];
-		NSParameterAssert(aesIV != nil);
-		connection.aesIV = [[NSString alloc] initWithData:[NSData dataFromBase64String:aesIV] encoding:NSISOLatin1StringEncoding];
-		
-		NSString *rsaaesKey = [body objectForKey:@"rsaaeskey"];
-		NSParameterAssert(rsaaesKey != nil);
-		
-		rsaaesKey = [[NSString alloc] initWithData:[NSData dataFromBase64String:rsaaesKey] encoding:NSISOLatin1StringEncoding];
-		[crypto setCipherText:[rsaaesKey dataUsingEncoding:NSISOLatin1StringEncoding]];
-		NSString *aesKey = [[NSString alloc] initWithData:[crypto decrypt] encoding:NSISOLatin1StringEncoding];
-		NSParameterAssert(aesKey != nil);
-		connection.aesKey = aesKey;
-		
-		connection.fmtp = [body objectForKey:@"fmtp"];
+		[self handleAnnounceRequest:request connection:connection];
 	} else if([method hasPrefix:@"SETUP"]) {
-		NSString *transport = [request objectForKey:@"Transport"];
-		
-		// RTP/AVP/UDP;unicast;interleaved=0-1;mode=record;control_port=6001;timing_port=6002
-		NSArray *pieces = [transport componentsSeparatedByString:@";"];
-		NSMutableDictionary *transportValues = [NSMutableDictionary dictionary];
-		for(NSString *piece in pieces) {
-			NSArray *pair = [piece componentsSeparatedByString:@"="];
-			if(pair.count >= 2) {
-				[transportValues setObject:[pair objectAtIndex:1] forKey:[pair objectAtIndex:0]];
-			}
-		}
-		
-		NSString *cport = [transportValues objectForKey:@"control_port"];
-		NSString *tport = [transportValues objectForKey:@"timing_port"];
-		NSString *dport = [transportValues objectForKey:@"server_port"];
-		
-		const char *str = [connection.aesIV cStringUsingEncoding:NSASCIIStringEncoding];
-		NSUInteger len = [connection.aesIV lengthOfBytesUsingEncoding:NSASCIIStringEncoding];
-		
-		NSMutableString *iv = [NSMutableString string];
-		for(NSUInteger i = 0; i < len; i++) {
-			char chu = upperToHex(str[i]);
-			char chl = lowerToHex(str[i]);
-			[iv appendFormat:@"%c%c", chu, chl];
-		}
-		
-		str = [connection.aesKey cStringUsingEncoding:NSASCIIStringEncoding];
-		len = [connection.aesKey lengthOfBytesUsingEncoding:NSASCIIStringEncoding];
-		
-		NSMutableString *key = [NSMutableString string];
-		for(NSUInteger i = 0; i < len; i++) {
-			char chu = upperToHex(str[i]);
-			char chl = lowerToHex(str[i]);
-			[key appendFormat:@"%c%c", chu, chl];
-		}
-		
-		NSString *path = [[NSBundle mainBundle] pathForAuxiliaryExecutable:@"hairtunes"];
-		NSTask *task = [[NSTask alloc] init];
-		[task setLaunchPath:path];
-		[task setArguments:[NSArray arrayWithObjects:@"iv", [NSString stringWithFormat:@"'%@'", iv], @"key", [NSString stringWithFormat:@"'%@'", key], @"fmtp", [NSString stringWithFormat:@"'%@'", connection.fmtp], @"cport", [NSString stringWithFormat:@"'%@'", cport], @"tport", [NSString stringWithFormat:@"'%@'", tport], @"dport", [NSString stringWithFormat:@"'%@'", dport], nil]];
-		
-		NSPipe *outputPipe = [NSPipe pipe];
-		[task setStandardOutput:outputPipe];
-		NSFileHandle *outputFileHandle = [outputPipe fileHandleForReading];
-		[task launch];
-		
-		NSString *serverPort = @"";
-		while(YES) {
-			NSData *data = [outputFileHandle availableData];
-			NSString *output = [[NSString alloc] initWithData:data encoding:NSASCIIStringEncoding];
-			if([output hasPrefix:@"port: "]) {
-				NSString *portString = [output stringByReplacingOccurrencesOfString:@"port: " withString:@""];
-				serverPort = [portString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-				break;
-			}
-			
-			if(![task isRunning]) {
-				break;
-			}
-			
-			[[NSRunLoop currentRunLoop] runUntilDate:[NSDate distantPast]];
-		}
-		
-		[response setObject:@"DEADBEEF" forKey:@"Session"];
-		[response setObject:[NSString stringWithFormat:@"%@;server_port=%lu", transport, serverPort] forKey:@"Transport"];
+		[self handleSetupRequest:request connection:connection response:response];
 	} else if([method hasPrefix:@"RECORD"]) {
 		// TODO: umm... nothing?
 	} else if([method hasPrefix:@"FLUSH"]) {
@@ -375,6 +285,106 @@ char nibbleToHex(int nibble)
 	DebugLog(@"Response: %@", responseString);
 	
 	[connection sendResponse:[responseString dataUsingEncoding:NSUTF8StringEncoding]];
+}
+
+- (void)handleAnnounceRequest:(NSDictionary *)request connection:(MSShairportConnection *)connection {
+	NSMutableDictionary *body = [NSMutableDictionary dictionary];
+	[[request objectForKey:@"Body"] enumerateLinesUsingBlock:^(NSString *line, BOOL *stop) {
+		NSArray *pieces = [line componentsSeparatedByString:@"="];
+		if(pieces.count >= 2) {				
+			NSMutableArray *remainingPieces = [pieces mutableCopy];
+			[remainingPieces removeObjectAtIndex:0];
+			NSString *value = [remainingPieces componentsJoinedByString:@""];
+			pieces = [value componentsSeparatedByString:@":"];
+			
+			if(pieces.count >= 2) {
+				[body setObject:[pieces objectAtIndex:1] forKey:[pieces objectAtIndex:0]];
+			}
+		}
+	}];
+	
+	NSString *aesIV = [body objectForKey:@"aesiv"];
+	NSParameterAssert(aesIV != nil);
+	connection.aesIV = [[NSString alloc] initWithData:[NSData dataFromBase64String:aesIV] encoding:NSISOLatin1StringEncoding];
+	
+	NSString *rsaaesKey = [body objectForKey:@"rsaaeskey"];
+	NSParameterAssert(rsaaesKey != nil);
+	
+	rsaaesKey = [[NSString alloc] initWithData:[NSData dataFromBase64String:rsaaesKey] encoding:NSISOLatin1StringEncoding];
+	[crypto setCipherText:[rsaaesKey dataUsingEncoding:NSISOLatin1StringEncoding]];
+	NSString *aesKey = [[NSString alloc] initWithData:[crypto decrypt] encoding:NSISOLatin1StringEncoding];
+	NSParameterAssert(aesKey != nil);
+	connection.aesKey = aesKey;
+	
+	connection.fmtp = [body objectForKey:@"fmtp"];
+}
+
+- (void)handleSetupRequest:(NSDictionary *)request connection:(MSShairportConnection *)connection response:(NSMutableDictionary *)response {
+	NSString *transport = [request objectForKey:@"Transport"];
+	
+	// RTP/AVP/UDP;unicast;interleaved=0-1;mode=record;control_port=6001;timing_port=6002
+	NSArray *pieces = [transport componentsSeparatedByString:@";"];
+	NSMutableDictionary *transportValues = [NSMutableDictionary dictionary];
+	for(NSString *piece in pieces) {
+		NSArray *pair = [piece componentsSeparatedByString:@"="];
+		if(pair.count >= 2) {
+			[transportValues setObject:[pair objectAtIndex:1] forKey:[pair objectAtIndex:0]];
+		}
+	}
+	
+	NSString *cport = [transportValues objectForKey:@"control_port"];
+	NSString *tport = [transportValues objectForKey:@"timing_port"];
+	NSString *dport = [transportValues objectForKey:@"server_port"];
+	
+	const char *str = [connection.aesIV cStringUsingEncoding:NSASCIIStringEncoding];
+	NSUInteger len = [connection.aesIV lengthOfBytesUsingEncoding:NSASCIIStringEncoding];
+	
+	NSMutableString *iv = [NSMutableString string];
+	for(NSUInteger i = 0; i < len; i++) {
+		char chu = upperToHex(str[i]);
+		char chl = lowerToHex(str[i]);
+		[iv appendFormat:@"%c%c", chu, chl];
+	}
+	
+	str = [connection.aesKey cStringUsingEncoding:NSASCIIStringEncoding];
+	len = [connection.aesKey lengthOfBytesUsingEncoding:NSASCIIStringEncoding];
+	
+	NSMutableString *key = [NSMutableString string];
+	for(NSUInteger i = 0; i < len; i++) {
+		char chu = upperToHex(str[i]);
+		char chl = lowerToHex(str[i]);
+		[key appendFormat:@"%c%c", chu, chl];
+	}
+	
+	NSString *path = [[NSBundle mainBundle] pathForAuxiliaryExecutable:@"hairtunes"];
+	NSTask *task = [[NSTask alloc] init];
+	[task setLaunchPath:path];
+	[task setArguments:[NSArray arrayWithObjects:@"iv", [NSString stringWithFormat:@"'%@'", iv], @"key", [NSString stringWithFormat:@"'%@'", key], @"fmtp", [NSString stringWithFormat:@"'%@'", connection.fmtp], @"cport", [NSString stringWithFormat:@"'%@'", cport], @"tport", [NSString stringWithFormat:@"'%@'", tport], @"dport", [NSString stringWithFormat:@"'%@'", dport], nil]];
+	
+	NSPipe *outputPipe = [NSPipe pipe];
+	[task setStandardOutput:outputPipe];
+	NSFileHandle *outputFileHandle = [outputPipe fileHandleForReading];
+	[task launch];
+	
+	NSString *serverPort = @"";
+	while(YES) {
+		NSData *data = [outputFileHandle availableData];
+		NSString *output = [[NSString alloc] initWithData:data encoding:NSASCIIStringEncoding];
+		if([output hasPrefix:@"port: "]) {
+			NSString *portString = [output stringByReplacingOccurrencesOfString:@"port: " withString:@""];
+			serverPort = [portString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+			break;
+		}
+		
+		if(![task isRunning]) {
+			break;
+		}
+		
+		[[NSRunLoop currentRunLoop] runUntilDate:[NSDate distantPast]];
+	}
+	
+	[response setObject:@"DEADBEEF" forKey:@"Session"];
+	[response setObject:[NSString stringWithFormat:@"%@;server_port=%lu", transport, serverPort] forKey:@"Transport"];
 }
 
 - (void)stop {
