@@ -199,6 +199,37 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 	}
 }
 
+
+char nibbleToHex(int nibble);
+char upperToHex(int byteVal);
+char upperToHex(int byteVal)
+{
+    int i = (byteVal & 0xF0) >> 4;
+    return nibbleToHex(i);
+}
+
+char lowerToHex(int byteVal);
+char lowerToHex(int byteVal)
+{
+    int i = (byteVal & 0x0F);
+    return nibbleToHex(i);
+}
+
+char nibbleToHex(int nibble)
+{
+    const int ascii_zero = 48;
+    const int ascii_a = 65;
+	
+    if((nibble >= 0) && (nibble <= 9))
+    {
+        return (char) (nibble + ascii_zero);
+    }
+    if((nibble >= 10) && (nibble <= 15))
+    {
+        return (char) (nibble - 10 + ascii_a);
+    }
+    return '?';
+}
 - (void)respondToRequest:(NSDictionary *)request connection:(MSShairportConnection *)connection {
 	NSString *responseHeader = @"RTSP/1.0 200 OK";
 	
@@ -266,20 +297,30 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 		NSString *tport = [transportValues objectForKey:@"timing_port"];
 		NSString *dport = [transportValues objectForKey:@"server_port"];
 		
+		const char *str = [connection.aesIV cStringUsingEncoding:NSASCIIStringEncoding];
+		NSUInteger len = [connection.aesIV lengthOfBytesUsingEncoding:NSASCIIStringEncoding];
+		
 		NSMutableString *iv = [NSMutableString string];
-		for(NSUInteger i = 0; i < [connection.aesIV length]; i++) {
-			[iv appendFormat:@"%x", CFSwapInt32HostToBig([connection.aesIV characterAtIndex:i])];
+		for(NSUInteger i = 0; i < len; i++) {
+			char chu = upperToHex(str[i]);
+			char chl = lowerToHex(str[i]);
+			[iv appendFormat:@"%c%c", chu, chl];
 		}
 		
+		str = [connection.aesKey cStringUsingEncoding:NSASCIIStringEncoding];
+		len = [connection.aesKey lengthOfBytesUsingEncoding:NSASCIIStringEncoding];
+		
 		NSMutableString *key = [NSMutableString string];
-		for(NSUInteger i = 0; i < [connection.aesKey length]; i++) {
-			[key appendFormat:@"%x", CFSwapInt32HostToBig([connection.aesKey characterAtIndex:i])];
+		for(NSUInteger i = 0; i < len; i++) {
+			char chu = upperToHex(str[i]);
+			char chl = lowerToHex(str[i]);
+			[key appendFormat:@"%c%c", chu, chl];
 		}
 		
 		NSString *path = [[NSBundle mainBundle] pathForAuxiliaryExecutable:@"hairtunes"];
 		NSTask *task = [[NSTask alloc] init];
 		[task setLaunchPath:path];
-		[task setArguments:[NSArray arrayWithObjects:@"iv", iv, @"key", key, @"fmtp", connection.fmtp, @"cport", cport, @"tport", tport, @"dport", dport, nil]];
+		[task setArguments:[NSArray arrayWithObjects:@"iv", [NSString stringWithFormat:@"'%@'", iv], @"key", [NSString stringWithFormat:@"'%@'", key], @"fmtp", [NSString stringWithFormat:@"'%@'", connection.fmtp], @"cport", [NSString stringWithFormat:@"'%@'", cport], @"tport", [NSString stringWithFormat:@"'%@'", tport], @"dport", [NSString stringWithFormat:@"'%@'", dport], nil]];
 		
 		NSPipe *outputPipe = [NSPipe pipe];
 		[task setStandardOutput:outputPipe];
