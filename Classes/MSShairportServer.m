@@ -305,6 +305,9 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 	NSString *cport = [transportValues objectForKey:@"control_port"];
 	NSString *tport = [transportValues objectForKey:@"timing_port"];
 	NSString *dport = [transportValues objectForKey:@"server_port"];
+	if(dport == nil) {
+		dport = tport;
+	}
 	
 	NSString *iv = [connection.aesIV stringWithHexBytes];
 	NSString *key = [connection.aesKey stringWithHexBytes];
@@ -312,7 +315,7 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 	NSString *path = [[NSBundle mainBundle] pathForAuxiliaryExecutable:@"hairtunes"];
 	NSTask *task = [[NSTask alloc] init];
 	[task setLaunchPath:path];
-	[task setArguments:[NSArray arrayWithObjects:@"iv", [NSString stringWithFormat:@"'%@'", iv], @"key", [NSString stringWithFormat:@"'%@'", key], @"fmtp", [NSString stringWithFormat:@"'%@'", connection.fmtp], @"cport", [NSString stringWithFormat:@"'%@'", cport], @"tport", [NSString stringWithFormat:@"'%@'", tport], @"dport", [NSString stringWithFormat:@"'%@'", dport], nil]];
+	[task setArguments:[NSArray arrayWithObjects:@"tport", [NSString stringWithFormat:@"%@", tport], @"iv", [NSString stringWithFormat:@"%@", iv], @"cport", [NSString stringWithFormat:@"%@", cport], @"fmtp", [NSString stringWithFormat:@"'%@'", connection.fmtp], @"dport", [NSString stringWithFormat:@"%@", dport], @"key", [NSString stringWithFormat:@"%@", key], nil]];
 	
 	NSPipe *outputPipe = [NSPipe pipe];
 	[task setStandardOutput:outputPipe];
