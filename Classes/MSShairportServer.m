@@ -220,6 +220,7 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 		// TODO: check auth
 	}
 	
+	BOOL shouldClose = NO;
 	NSString *method = [request objectForKey:@"Method"];
 	if([method hasPrefix:@"OPTIONS"]) {
 		[response setObject:@"ANNOUNCE, SETUP, RECORD, PAUSE, FLUSH, TEARDOWN, OPTIONS, GET_PARAMETER, SET_PARAMETER" forKey:@"Public"];
@@ -234,6 +235,7 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 	} else if([method hasPrefix:@"TEARDOWN"]) {
 		[response setObject:@"close" forKey:@"Connection"];
 		[connection.decoderInputFileHandle closeFile];
+		shouldClose = YES;
 	} else if([method hasPrefix:@"SET_PARAMETER"]) {
 		// TODO: pass along to hairtunes
 	} else if([method hasPrefix:@"GET_PARAMETER"]) {
@@ -255,6 +257,11 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 	DebugLog(@"Response: %@", responseString);
 	
 	[connection sendResponse:[responseString dataUsingEncoding:NSUTF8StringEncoding]];
+	
+	if(shouldClose) {
+		[connection close];
+		[self.connections removeObject:connection];
+	}
 }
 
 - (void)handleAnnounceRequest:(NSDictionary *)request connection:(MSShairportConnection *)connection {
@@ -360,6 +367,11 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 }
 
 - (void)stop {
+	for(MSShairportConnection *connection in self.connections) {
+		[connection close];
+		[self.connections removeObject:connection];
+	}
+	
 	[self shutdownServer];
 	[self unpublishService];
 }
@@ -415,6 +427,7 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 	NSArray *rightPieces = [[ipPieces objectAtIndex:1] componentsSeparatedByString:@":"];
 	// left = [fe80], right = [5a55, caff, fef3, 1499]
 	
+	// most IPv6 address will be abbreviated, iTunes wants the full address so we'll expand it out
 	NSMutableArray *paddingPieces = [NSMutableArray array];
 	NSUInteger padding = 8 - (leftPieces.count + rightPieces.count);
 	for(NSUInteger i = 0; i < padding; i++) {
