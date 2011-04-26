@@ -99,8 +99,8 @@ void writeStreamEventHandler(CFWriteStreamRef stream, CFStreamEventType eventTyp
 	CFReadStreamSetClient(readStream, registeredEvents, readStreamEventHandler, &context);
 	CFWriteStreamSetClient(writeStream, registeredEvents, writeStreamEventHandler, &context);
 	
-	CFReadStreamScheduleWithRunLoop(readStream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
-	CFWriteStreamScheduleWithRunLoop(writeStream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
+	CFReadStreamScheduleWithRunLoop(readStream, CFRunLoopGetCurrent(), kCFRunLoopCommonModes);
+	CFWriteStreamScheduleWithRunLoop(writeStream, CFRunLoopGetCurrent(), kCFRunLoopCommonModes);
 	
 	Boolean success = CFReadStreamOpen(readStream);
 	if(!success) {
@@ -117,14 +117,14 @@ void writeStreamEventHandler(CFWriteStreamRef stream, CFStreamEventType eventTyp
 
 - (void)close {	
 	if(readStream != nil) {
-		CFReadStreamUnscheduleFromRunLoop(readStream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
+		CFReadStreamUnscheduleFromRunLoop(readStream, CFRunLoopGetCurrent(), kCFRunLoopCommonModes);
 		CFReadStreamClose(readStream);
 		CFRelease(readStream);
 		readStream = NULL;
 	}
 	
 	if(writeStream != nil) {
-		CFWriteStreamUnscheduleFromRunLoop(writeStream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
+		CFWriteStreamUnscheduleFromRunLoop(writeStream, CFRunLoopGetCurrent(), kCFRunLoopCommonModes);
 		CFWriteStreamClose(writeStream);
 		CFRelease(writeStream);
 		writeStream = NULL;
@@ -136,7 +136,7 @@ void writeStreamEventHandler(CFWriteStreamRef stream, CFStreamEventType eventTyp
 - (void)sendResponse:(NSData *)data {
 	[self.outgoingData appendData:data];
 	
-	// try to actually write the data to the stream
+	// Try to actually write the data to the stream. If it fails then we can assume we'll get a kCFStreamEventCanAcceptBytes callback later on.
 	[self writeOutgoingBufferToStream];
 }
 
@@ -174,8 +174,8 @@ void readStreamEventHandler(CFReadStreamRef stream, CFStreamEventType eventType,
 }
 
 void writeStreamEventHandler(CFWriteStreamRef stream, CFStreamEventType eventType, void *info) {
-	MSShairportConnection *connection = info;
-	[connection writeStreamHandleEvent:eventType];
+	MSShairportConnection *self = info;
+	[self writeStreamHandleEvent:eventType];
 }
 
 - (void)writeStreamHandleEvent:(CFStreamEventType)event {
