@@ -123,13 +123,13 @@ static SSCrypto *crypto = nil;
 - (BOOL)start:(NSError **)error {
 	BOOL success = [self createServer];
 	if(!success) {
-		if(error != NULL) *error = [NSError errorWithDomain:NSStringFromClass([self class]) code:-1 userInfo:nil];
+		if(error != NULL) *error = [NSError errorWithDomain:NSStringFromClass([self class]) code:MSShairportServerCreateServerErrorCode userInfo:nil];
 		return NO;
 	}
 	
 	success = [self publishService];
 	if(!success) {
-		if(error != NULL) *error = [NSError errorWithDomain:NSStringFromClass([self class]) code:-1 userInfo:nil];
+		if(error != NULL) *error = [NSError errorWithDomain:NSStringFromClass([self class]) code:MSShairportServerPublishServiceErrorCode userInfo:nil];
 		return NO;
 	}
 	
@@ -147,7 +147,7 @@ static SSCrypto *crypto = nil;
 	int fileDescriptor = CFSocketGetNative(listeningSocket);
 	int err = setsockopt(fileDescriptor, SOL_SOCKET, SO_REUSEADDR, (void *) &existingValue, sizeof(existingValue));
 	if(err != 0) {
-		DebugLog(@"Wasn't able to set socket options");
+		DebugLog(@"Unable to set socket address reuse.");
 		
 		CFRelease(listeningSocket);
 		listeningSocket = NULL;
@@ -184,7 +184,7 @@ static SSCrypto *crypto = nil;
 }
 
 static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, CFDataRef address, const void *data, void *info) {
-	MSShairportServer *server = info;
+	MSShairportServer *self = info;
 	
 	if(type != kCFSocketAcceptCallBack) {
 		return;
@@ -194,8 +194,8 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 	CFSocketNativeHandle nativeSocketHandle = *(CFSocketNativeHandle *) data;
 	
 	MSShairportConnection *newConnection = [MSShairportConnection connectionWithSocketHandle:nativeSocketHandle addressData:addressData];
-	[server.connections addObject:newConnection];
-	newConnection.delegate = server;
+	[self.connections addObject:newConnection];
+	newConnection.delegate = self;
 	
 	BOOL success = [newConnection open];
 	if(!success) {
@@ -205,8 +205,9 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 }
 
 - (void)respondToRequest:(NSDictionary *)request connection:(MSShairportConnection *)connection {
-	static NSString * const responseHeader = @"RTSP/1.0 200 OK";
 	NSMutableDictionary *response = [NSMutableDictionary dictionary];
+	
+	// we always respond with these regardless of the request
 	[response setObject:[request objectForKey:@"CSeq"] forKey:@"CSeq"];
 	[response setObject:@"connected; type=analog" forKey:@"Audio-Jack-Status"];
 	
@@ -229,7 +230,7 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 	} else if([method hasPrefix:@"SETUP"]) {
 		[self handleSetupRequest:request connection:connection response:response];
 	} else if([method hasPrefix:@"RECORD"]) {
-		// nothing to do from RECORD
+		// RECORD means the stream has started with hairtunes but it doesn't require any special response from us
 	} else if([method hasPrefix:@"FLUSH"]) {
 		[connection.decoderInputFileHandle writeData:[@"flush\n" dataUsingEncoding:NSASCIIStringEncoding]];
 	} else if([method hasPrefix:@"TEARDOWN"]) {
@@ -239,13 +240,14 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 	} else if([method hasPrefix:@"SET_PARAMETER"]) {
 		// TODO: pass along to hairtunes
 	} else if([method hasPrefix:@"GET_PARAMETER"]) {
-		// TODO: nothing?
+		// TODO: it might be nice to return something here but shairtunes.pl doesn't
 	} else if([method hasPrefix:@"DENIED"]) {
 		// awww shit
 	} else {
 		DebugLog(@"Unknown method: %@", method);
 	}
-		
+	
+	static NSString * const responseHeader = @"RTSP/1.0 200 OK";
 	NSMutableString *responseString = [NSMutableString stringWithFormat:@"%@\r\n", responseHeader];
 	for(NSString *key in response) {
 		NSString *value = [response objectForKey:key];

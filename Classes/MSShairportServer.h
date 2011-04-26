@@ -9,6 +9,11 @@
 #import <Cocoa/Cocoa.h>
 #import "MSShairportConnection.h"
 
+enum {
+	MSShairportServerCreateServerErrorCode = -1,
+	MSShairportServerPublishServiceErrorCode = -2,
+};
+
 @protocol MSShairportServerDelegate <NSObject>
 // If fatal == YES then the server has already been stopped by the time the delegate receives this message.
 - (void)shairportServerDidEncounterError:(NSError *)error fatal:(BOOL)fatal;
