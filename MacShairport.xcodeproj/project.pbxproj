@@ -17,6 +17,8 @@
 		889B03BE13653B560030E6CC /* MSShairportConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 889B03BA13653B560030E6CC /* MSShairportConnection.m */; };
 		889B03BF13653B560030E6CC /* MSShairportServer.m in Sources */ = {isa = PBXBuildFile; fileRef = 889B03BC13653B560030E6CC /* MSShairportServer.m */; };
 		889B03C413653B730030E6CC /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 889B03C213653B730030E6CC /* MainMenu.xib */; };
+		88DB7F8713669A5200FDBF57 /* alac.c in Sources */ = {isa = PBXBuildFile; fileRef = 88DB7F8413669A5200FDBF57 /* alac.c */; settings = {COMPILER_FLAGS = "-w"; }; };
+		88DB7F8813669A5200FDBF57 /* hairtunes.c in Sources */ = {isa = PBXBuildFile; fileRef = 88DB7F8613669A5200FDBF57 /* hairtunes.c */; settings = {COMPILER_FLAGS = "-w"; }; };
 		88DF8CA5135D327900E1AF2C /* hairtunes in CopyFiles */ = {isa = PBXBuildFile; fileRef = 88DF8CA1135D326200E1AF2C /* hairtunes */; };
 		8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
 		8D11072D0486CEB800E47090 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; settings = {ATTRIBUTES = (); }; };
@@ -61,6 +63,10 @@
 		889B03BB13653B560030E6CC /* MSShairportServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MSShairportServer.h; sourceTree = "<group>"; };
 		889B03BC13653B560030E6CC /* MSShairportServer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MSShairportServer.m; sourceTree = "<group>"; };
 		889B03C313653B730030E6CC /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/MainMenu.xib; sourceTree = SOURCE_ROOT; };
+		88DB7F8413669A5200FDBF57 /* alac.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = alac.c; sourceTree = "<group>"; };
+		88DB7F8513669A5200FDBF57 /* alac.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = alac.h; sourceTree = "<group>"; };
+		88DB7F8613669A5200FDBF57 /* hairtunes.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = hairtunes.c; sourceTree = "<group>"; };
+		88DB7F8913669A5800FDBF57 /* hairtunes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hairtunes.h; sourceTree = "<group>"; };
 		88DF8CA1135D326200E1AF2C /* hairtunes */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = hairtunes; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* MacShairport-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "MacShairport-Info.plist"; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* MacShairport.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacShairport.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -136,6 +142,10 @@
 		29B97315FDCFA39411CA2CEA /* Other Sources */ = {
 			isa = PBXGroup;
 			children = (
+				88DB7F8413669A5200FDBF57 /* alac.c */,
+				88DB7F8513669A5200FDBF57 /* alac.h */,
+				88DB7F8613669A5200FDBF57 /* hairtunes.c */,
+				88DB7F8913669A5800FDBF57 /* hairtunes.h */,
 				256AC3F00F4B6AF500CF3369 /* MacShairport_Prefix.pch */,
 				29B97316FDCFA39411CA2CEA /* main.m */,
 			);
@@ -253,6 +263,8 @@
 				889B03BD13653B560030E6CC /* MacShairportAppDelegate.m in Sources */,
 				889B03BE13653B560030E6CC /* MSShairportConnection.m in Sources */,
 				889B03BF13653B560030E6CC /* MSShairportServer.m in Sources */,
+				88DB7F8713669A5200FDBF57 /* alac.c in Sources */,
+				88DB7F8813669A5200FDBF57 /* hairtunes.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -289,11 +301,14 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = MacShairport_Prefix.pch;
-				HEADER_SEARCH_PATHS = "";
+				HEADER_SEARCH_PATHS = /usr/local/Cellar/libao/1.1.0/include;
 				INFOPLIST_FILE = "MacShairport-Info.plist";
 				INSTALL_PATH = "$(HOME)/Applications";
 				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "-lcrypto";
+				OTHER_LDFLAGS = (
+					"-lao",
+					"-lcrypto",
+				);
 				PRODUCT_NAME = MacShairport;
 			};
 			name = Debug;
@@ -306,11 +321,14 @@
 				GCC_MODEL_TUNING = G5;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = MacShairport_Prefix.pch;
-				HEADER_SEARCH_PATHS = "";
+				HEADER_SEARCH_PATHS = /usr/local/Cellar/libao/1.1.0/include;
 				INFOPLIST_FILE = "MacShairport-Info.plist";
 				INSTALL_PATH = "$(HOME)/Applications";
 				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "-lcrypto";
+				OTHER_LDFLAGS = (
+					"-lao",
+					"-lcrypto",
+				);
 				PRODUCT_NAME = MacShairport;
 			};
 			name = Release;
