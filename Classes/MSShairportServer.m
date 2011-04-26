@@ -77,6 +77,8 @@ static SSCrypto *crypto = nil;
 }
 
 - (void)connectionDidClose:(MSShairportConnection *)connection {
+	DebugLog(@"Connection closed: %@", connection);
+	
 	[self.connections removeObject:connection];
 }
 
@@ -189,7 +191,7 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 	}
 	
 	NSData *addressData = (NSData *) address;
-	CFSocketNativeHandle nativeSocketHandle = *(CFSocketNativeHandle *)data;
+	CFSocketNativeHandle nativeSocketHandle = *(CFSocketNativeHandle *) data;
 	
 	MSShairportConnection *newConnection = [MSShairportConnection connectionWithSocketHandle:nativeSocketHandle addressData:addressData];
 	[server.connections addObject:newConnection];
@@ -203,7 +205,7 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 }
 
 - (void)respondToRequest:(NSDictionary *)request connection:(MSShairportConnection *)connection {
-	NSString *responseHeader = @"RTSP/1.0 200 OK";
+	static NSString * const responseHeader = @"RTSP/1.0 200 OK";
 	NSMutableDictionary *response = [NSMutableDictionary dictionary];
 	[response setObject:[request objectForKey:@"CSeq"] forKey:@"CSeq"];
 	[response setObject:@"connected; type=analog" forKey:@"Audio-Jack-Status"];
@@ -226,9 +228,9 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 	} else if([method hasPrefix:@"SETUP"]) {
 		[self handleSetupRequest:request connection:connection response:response];
 	} else if([method hasPrefix:@"RECORD"]) {
-		// TODO: umm... nothing?
+		// nothing to do from RECORD
 	} else if([method hasPrefix:@"FLUSH"]) {
-		// TODO: flush hairtunes
+		[connection.decoderInputFileHandle writeData:[@"flush\n" dataUsingEncoding:NSASCIIStringEncoding]];
 	} else if([method hasPrefix:@"TEARDOWN"]) {
 		[response setObject:@"close" forKey:@"Connection"];
 	} else if([method hasPrefix:@"SET_PARAMETER"]) {
@@ -240,9 +242,7 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 	} else {
 		DebugLog(@"Unknown method: %@", method);
 	}
-	
-	DebugLog(@"Body: %@", [request objectForKey:@"Body"]);
-	
+		
 	NSMutableString *responseString = [NSMutableString stringWithFormat:@"%@\r\n", responseHeader];
 	for(NSString *key in response) {
 		NSString *value = [response objectForKey:key];
@@ -315,11 +315,19 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 	NSString *path = [[NSBundle mainBundle] pathForAuxiliaryExecutable:@"hairtunes"];
 	NSTask *task = [[NSTask alloc] init];
 	[task setLaunchPath:path];
-	[task setArguments:[NSArray arrayWithObjects:@"tport", [NSString stringWithFormat:@"%@", tport], @"iv", [NSString stringWithFormat:@"%@", iv], @"cport", [NSString stringWithFormat:@"%@", cport], @"fmtp", [NSString stringWithFormat:@"%@", connection.fmtp], @"dport", [NSString stringWithFormat:@"%@", dport], @"key", [NSString stringWithFormat:@"%@", key], nil]];
+	
+	NSArray *arguments = [NSArray arrayWithObjects:@"tport", tport, @"iv", iv, @"cport", cport, @"fmtp", connection.fmtp, @"dport", dport, @"key", key, nil];
+	[task setArguments:arguments];
 	
 	NSPipe *outputPipe = [NSPipe pipe];
 	[task setStandardOutput:outputPipe];
 	NSFileHandle *outputFileHandle = [outputPipe fileHandleForReading];
+	
+	NSPipe *inputPipe = [NSPipe pipe];
+	[task setStandardInput:inputPipe];
+	NSFileHandle *inputFileHandle = [inputPipe fileHandleForWriting];
+	
+	connection.decoderInputFileHandle = inputFileHandle;
 	
 	[task launch];
 	
