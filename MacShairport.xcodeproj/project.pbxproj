@@ -17,6 +17,8 @@
 		889B03BE13653B560030E6CC /* MSShairportConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 889B03BA13653B560030E6CC /* MSShairportConnection.m */; };
 		889B03BF13653B560030E6CC /* MSShairportServer.m in Sources */ = {isa = PBXBuildFile; fileRef = 889B03BC13653B560030E6CC /* MSShairportServer.m */; };
 		889B03C413653B730030E6CC /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 889B03C213653B730030E6CC /* MainMenu.xib */; };
+		88D0B4D713677E0A008A073F /* libao.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 88D0B4D613677E0A008A073F /* libao.dylib */; };
+		88D0B50713677F4A008A073F /* libao.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = 88D0B4D613677E0A008A073F /* libao.dylib */; };
 		88DF8CA5135D327900E1AF2C /* hairtunes in CopyFiles */ = {isa = PBXBuildFile; fileRef = 88DF8CA1135D326200E1AF2C /* hairtunes */; };
 		8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
 		8D11072D0486CEB800E47090 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; settings = {ATTRIBUTES = (); }; };
@@ -24,6 +26,16 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		88D0B50B13677F4D008A073F /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				88D0B50713677F4A008A073F /* libao.dylib in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		88DF8CA8135D329700E1AF2C /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -61,6 +73,7 @@
 		889B03BB13653B560030E6CC /* MSShairportServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MSShairportServer.h; sourceTree = "<group>"; };
 		889B03BC13653B560030E6CC /* MSShairportServer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MSShairportServer.m; sourceTree = "<group>"; };
 		889B03C313653B730030E6CC /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/MainMenu.xib; sourceTree = SOURCE_ROOT; };
+		88D0B4D613677E0A008A073F /* libao.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libao.dylib; sourceTree = "<group>"; };
 		88DF8CA1135D326200E1AF2C /* hairtunes */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = hairtunes; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* MacShairport-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "MacShairport-Info.plist"; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* MacShairport.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacShairport.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -73,6 +86,7 @@
 			files = (
 				8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */,
 				886A42CE1360F34500F6C6E4 /* SystemConfiguration.framework in Frameworks */,
+				88D0B4D713677E0A008A073F /* libao.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -156,6 +170,7 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				88D0B4D613677E0A008A073F /* libao.dylib */,
 				1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */,
 				1058C7A2FEA54F0111CA2CBB /* Other Frameworks */,
 			);
@@ -189,6 +204,7 @@
 				8D11072C0486CEB800E47090 /* Sources */,
 				8D11072E0486CEB800E47090 /* Frameworks */,
 				88DF8CA8135D329700E1AF2C /* CopyFiles */,
+				88D0B50B13677F4D008A073F /* CopyFiles */,
 			);
 			buildRules = (
 			);
@@ -283,6 +299,10 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)\"",
+				);
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_MODEL_TUNING = G5;
@@ -292,6 +312,10 @@
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "MacShairport-Info.plist";
 				INSTALL_PATH = "$(HOME)/Applications";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)\"",
+				);
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "-lcrypto";
 				PRODUCT_NAME = MacShairport;
@@ -303,12 +327,20 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)\"",
+				);
 				GCC_MODEL_TUNING = G5;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = MacShairport_Prefix.pch;
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "MacShairport-Info.plist";
 				INSTALL_PATH = "$(HOME)/Applications";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)\"",
+				);
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "-lcrypto";
 				PRODUCT_NAME = MacShairport;
