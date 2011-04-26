@@ -8,6 +8,7 @@
 
 #import "MSShairportConnection.h"
 #import <netdb.h>
+#import <arpa/inet.h>
 
 void readStreamEventHandler(CFReadStreamRef stream, CFStreamEventType eventType, void *info);
 void writeStreamEventHandler(CFWriteStreamRef stream, CFStreamEventType eventType, void *info);
@@ -69,20 +70,22 @@ void writeStreamEventHandler(CFWriteStreamRef stream, CFStreamEventType eventTyp
 	if(self == nil) return nil;
 		
 	socketHandle = handle;
-		
-	if([addressData length] >= sizeof(struct sockaddr_in6)) {
-		char hostStr[NI_MAXHOST];
-		char servStr[NI_MAXSERV];
-		
-		int error = getnameinfo([addressData bytes], (socklen_t) [addressData length], hostStr, sizeof(hostStr), servStr, sizeof(servStr), NI_NUMERICHOST | NI_NUMERICSERV);
-		NSString *hostString = [NSString stringWithCString:hostStr encoding:NSASCIIStringEncoding];
-		// fe80::5a55:caff:fef3:1499%en0
-		if(error == 0) {
-			// we don't want the interface (en0) part
-			self.remoteIP = [hostString substringToIndex:[hostString length] - 4];
-		}
+	
+	struct sockaddr_in6 sockaddr6;
+	socklen_t sockaddr6len = sizeof(sockaddr6);
+	
+	if(getsockname(handle, (struct sockaddr *)&sockaddr6, &sockaddr6len) < 0) {
+		return nil;
 	}
 	
+	char addressBuffer[INET6_ADDRSTRLEN];
+	
+	if(inet_ntop(AF_INET6, &sockaddr6.sin6_addr, addressBuffer, (socklen_t) sizeof(addressBuffer)) == NULL) {
+		return nil;
+	}
+	
+	self.remoteIP = [NSString stringWithCString:addressBuffer encoding:NSASCIIStringEncoding];
+		
 	return self;
 }
 
