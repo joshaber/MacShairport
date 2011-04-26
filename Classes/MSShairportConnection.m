@@ -13,7 +13,6 @@ void readStreamEventHandler(CFReadStreamRef stream, CFStreamEventType eventType,
 void writeStreamEventHandler(CFWriteStreamRef stream, CFStreamEventType eventType, void *info);
 
 @interface MSShairportConnection ()
-@property (nonatomic, retain) NSMutableData *incomingData;
 @property (nonatomic, retain) NSMutableData *outgoingData;
 @property (nonatomic, assign) BOOL readStreamOpen;
 @property (nonatomic, assign) BOOL writeStreamOpen;
@@ -31,10 +30,16 @@ void writeStreamEventHandler(CFWriteStreamRef stream, CFStreamEventType eventTyp
 @implementation MSShairportConnection
 
 
+#pragma mark NSObject
+
+- (NSString *)description {
+	return [NSString stringWithFormat:@"<%@: %p> remoteIP: %@", NSStringFromClass([self class]), self, self.remoteIP];
+}
+
+
 #pragma mark API
 
 @synthesize delegate;
-@synthesize incomingData;
 @synthesize outgoingData;
 @synthesize readStreamOpen;
 @synthesize writeStreamOpen;
@@ -42,6 +47,7 @@ void writeStreamEventHandler(CFWriteStreamRef stream, CFStreamEventType eventTyp
 @synthesize aesIV;
 @synthesize aesKey;
 @synthesize fmtp;
+@synthesize decoderInputFileHandle;
 
 + (MSShairportConnection *)connectionWithSocketHandle:(CFSocketNativeHandle)handle addressData:(NSData *)addressData {
 	return [[[self alloc] initWithSocketHandle:handle addressData:addressData] autorelease];
@@ -84,7 +90,6 @@ void writeStreamEventHandler(CFWriteStreamRef stream, CFStreamEventType eventTyp
 - (BOOL)open {
 	CFStreamCreatePairWithSocket(kCFAllocatorDefault, socketHandle, &readStream, &writeStream);
 	
-	self.incomingData = [NSMutableData data];
 	self.outgoingData = [NSMutableData data];
 	
 	CFReadStreamSetProperty(readStream, kCFStreamPropertyShouldCloseNativeSocket, kCFBooleanTrue);
@@ -126,7 +131,6 @@ void writeStreamEventHandler(CFWriteStreamRef stream, CFStreamEventType eventTyp
 		writeStream = NULL;
 	}
 	
-	self.incomingData = nil;
 	self.outgoingData = nil;
 }
 
@@ -151,6 +155,7 @@ void readStreamEventHandler(CFReadStreamRef stream, CFStreamEventType eventType,
 }
 
 - (void)readFromStreamIntoIncomingBuffer {
+	NSMutableData *incomingData = [NSMutableData dataWithCapacity:512];
 	while(CFReadStreamHasBytesAvailable(readStream)) {
 		UInt8 buffer[512];
 		CFIndex length = CFReadStreamRead(readStream, buffer, sizeof(buffer));
@@ -160,12 +165,10 @@ void readStreamEventHandler(CFReadStreamRef stream, CFStreamEventType eventType,
 			return;
 		}
 		
-		[self.incomingData appendBytes:buffer length:(NSUInteger) length];
+		[incomingData appendBytes:buffer length:(NSUInteger) length];
 	}
 	
-	[self.delegate connection:self didReceiveData:self.incomingData];
-	
-	self.incomingData = [NSMutableData data];
+	[self.delegate connection:self didReceiveData:incomingData];
 }
 
 void writeStreamEventHandler(CFWriteStreamRef stream, CFStreamEventType eventType, void *info) {

@@ -27,6 +27,7 @@
 @property (nonatomic, retain) NSData *aesIV;
 @property (nonatomic, retain) NSData *aesKey;
 @property (nonatomic, copy) NSString *fmtp;
+@property (nonatomic, retain) NSFileHandle *decoderInputFileHandle;
 
 + (MSShairportConnection *)connectionWithSocketHandle:(CFSocketNativeHandle)handle addressData:(NSData *)addressData;
 
