@@ -32,6 +32,7 @@
 + (MSShairportConnection *)connectionWithSocketHandle:(CFSocketNativeHandle)handle addressData:(NSData *)addressData;
 
 - (BOOL)open;
+- (void)close;
 
 - (void)sendResponse:(NSData *)data;
 

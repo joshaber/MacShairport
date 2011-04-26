@@ -19,7 +19,6 @@ void writeStreamEventHandler(CFWriteStreamRef stream, CFStreamEventType eventTyp
 @property (nonatomic, copy) NSString *remoteIP;
 
 - (id)initWithSocketHandle:(CFSocketNativeHandle)handle addressData:(NSData *)addressData;
-- (void)close;
 - (void)readStreamHandleEvent:(CFStreamEventType)event;
 - (void)readFromStreamIntoIncomingBuffer;
 - (void)writeStreamHandleEvent:(CFStreamEventType)event;
@@ -100,8 +99,8 @@ void writeStreamEventHandler(CFWriteStreamRef stream, CFStreamEventType eventTyp
 	CFReadStreamSetClient(readStream, registeredEvents, readStreamEventHandler, &context);
 	CFWriteStreamSetClient(writeStream, registeredEvents, writeStreamEventHandler, &context);
 	
-	CFReadStreamScheduleWithRunLoop(readStream, CFRunLoopGetCurrent(), kCFRunLoopCommonModes);
-	CFWriteStreamScheduleWithRunLoop(writeStream, CFRunLoopGetCurrent(), kCFRunLoopCommonModes);
+	CFReadStreamScheduleWithRunLoop(readStream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
+	CFWriteStreamScheduleWithRunLoop(writeStream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
 	
 	Boolean success = CFReadStreamOpen(readStream);
 	if(!success) {
@@ -118,14 +117,14 @@ void writeStreamEventHandler(CFWriteStreamRef stream, CFStreamEventType eventTyp
 
 - (void)close {	
 	if(readStream != nil) {
-		CFReadStreamUnscheduleFromRunLoop(readStream, CFRunLoopGetCurrent(), kCFRunLoopCommonModes);
+		CFReadStreamUnscheduleFromRunLoop(readStream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
 		CFReadStreamClose(readStream);
 		CFRelease(readStream);
 		readStream = NULL;
 	}
 	
 	if(writeStream != nil) {
-		CFWriteStreamUnscheduleFromRunLoop(writeStream, CFRunLoopGetCurrent(), kCFRunLoopCommonModes);
+		CFWriteStreamUnscheduleFromRunLoop(writeStream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
 		CFWriteStreamClose(writeStream);
 		CFRelease(writeStream);
 		writeStream = NULL;
@@ -136,6 +135,9 @@ void writeStreamEventHandler(CFWriteStreamRef stream, CFStreamEventType eventTyp
 
 - (void)sendResponse:(NSData *)data {
 	[self.outgoingData appendData:data];
+	
+	// try to actually write the data to the stream
+	[self writeOutgoingBufferToStream];
 }
 
 void readStreamEventHandler(CFReadStreamRef stream, CFStreamEventType eventType, void *info) {
