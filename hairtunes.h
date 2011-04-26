@@ -1,1 +1,0 @@
-int start_hairtunes(int argc, char **argv);

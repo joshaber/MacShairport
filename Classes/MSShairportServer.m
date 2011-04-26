@@ -14,7 +14,6 @@
 #import "SSCrypto.h"
 #import "NSString+MSExtensions.h"
 #import "NSData+MSExtensions.h"
-#import "hairtunes.h"
 
 static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, CFDataRef address, const void *data, void *info);
 
@@ -234,6 +233,7 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 		[connection.decoderInputFileHandle writeData:[@"flush\n" dataUsingEncoding:NSASCIIStringEncoding]];
 	} else if([method hasPrefix:@"TEARDOWN"]) {
 		[response setObject:@"close" forKey:@"Connection"];
+		[connection.decoderInputFileHandle closeFile];
 	} else if([method hasPrefix:@"SET_PARAMETER"]) {
 		// TODO: pass along to hairtunes
 	} else if([method hasPrefix:@"GET_PARAMETER"]) {
@@ -318,58 +318,45 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 	[task setLaunchPath:path];
 	
 	NSArray *arguments = [NSArray arrayWithObjects:@"tport", tport, @"iv", iv, @"cport", cport, @"fmtp", connection.fmtp, @"dport", dport, @"key", key, nil];
+	[task setArguments:arguments];
 	
-	[self performSelectorInBackground:@selector(startServerWithArguments:) withObject:arguments];
+	NSPipe *outputPipe = [NSPipe pipe];
+	[task setStandardOutput:outputPipe];
+	NSFileHandle *outputFileHandle = [outputPipe fileHandleForReading];
 	
-//	[task setArguments:arguments];
-//	
-//	NSPipe *outputPipe = [NSPipe pipe];
-//	[task setStandardOutput:outputPipe];
-//	NSFileHandle *outputFileHandle = [outputPipe fileHandleForReading];
-//	
-//	NSPipe *inputPipe = [NSPipe pipe];
-//	[task setStandardInput:inputPipe];
-//	NSFileHandle *inputFileHandle = [inputPipe fileHandleForWriting];
-//	
-//	connection.decoderInputFileHandle = inputFileHandle;
-//	
-//	[task launch];
-//	
-//	__block NSString *serverPort = @"";
-//	while(YES) {
-//		NSData *data = [outputFileHandle availableData];
-//		NSString *output = [[NSString alloc] initWithData:data encoding:NSASCIIStringEncoding];
-//		__block BOOL done = NO;
-//		[output enumerateLinesUsingBlock:^(NSString *line, BOOL *stop) {
-//			if([line hasPrefix:@"port: "]) {
-//				NSString *portString = [line stringByReplacingOccurrencesOfString:@"port: " withString:@""];
-//				serverPort = [portString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-//				done = YES;
-//				*stop = YES;
-//			}
-//		}];
-//		
-//		if(done) break;
-//		
-//		if(![task isRunning]) {
-//			break;
-//		}
-//		
-//		[[NSRunLoop currentRunLoop] runUntilDate:[NSDate distantPast]];
-//	}
+	NSPipe *inputPipe = [NSPipe pipe];
+	[task setStandardInput:inputPipe];
+	NSFileHandle *inputFileHandle = [inputPipe fileHandleForWriting];
+	
+	connection.decoderInputFileHandle = inputFileHandle;
+	
+	[task launch];
+	
+	__block NSString *serverPort = @"";
+	while(YES) {
+		NSData *data = [outputFileHandle availableData];
+		NSString *output = [[NSString alloc] initWithData:data encoding:NSASCIIStringEncoding];
+		__block BOOL done = NO;
+		[output enumerateLinesUsingBlock:^(NSString *line, BOOL *stop) {
+			if([line hasPrefix:@"port: "]) {
+				NSString *portString = [line stringByReplacingOccurrencesOfString:@"port: " withString:@""];
+				serverPort = [portString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+				done = YES;
+				*stop = YES;
+			}
+		}];
+		
+		if(done) break;
+		
+		if(![task isRunning]) {
+			break;
+		}
+		
+		[[NSRunLoop currentRunLoop] runUntilDate:[NSDate distantPast]];
+	}
 		
 	[response setObject:@"DEADBEEF" forKey:@"Session"];
-	[response setObject:[NSString stringWithFormat:@"%@;server_port=%@", transport, @"6003"] forKey:@"Transport"];
-}
-
-- (void)startServerWithArguments:(NSArray *)arguments {
-	char *args[arguments.count];
-	for(NSUInteger i = 0; i < arguments.count; i++) {
-		args[i] = (char *) malloc(sizeof(char) * ([[arguments objectAtIndex:i] length] + 1));
-		snprintf(args[i], [[arguments objectAtIndex:i] length] + 1, "%s", [[arguments objectAtIndex:i] cStringUsingEncoding:NSASCIIStringEncoding]);
-	}
-	
-	start_hairtunes((int) arguments.count, args);
+	[response setObject:[NSString stringWithFormat:@"%@;server_port=%@", transport, serverPort] forKey:@"Transport"];
 }
 
 - (void)stop {
