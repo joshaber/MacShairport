@@ -20,7 +20,7 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 static const int MSShairportServerPort = 5000;
 
 // The MAC address doesn't actually have to be right, just has to be a valid format.
-static NSString * const MSShairportServerMACAddress = @"fe:dc:ba:98:76:53";
+static NSString * const MSShairportServerMACAddress = @"fe:dc:ba:98:75:50";
 
 static SSCrypto *crypto = nil;
 
@@ -38,6 +38,7 @@ static SSCrypto *crypto = nil;
 - (void)respondToRequest:(NSDictionary *)request connection:(MSShairportConnection *)connection;
 - (void)handleAnnounceRequest:(NSDictionary *)request connection:(MSShairportConnection *)connection;
 - (void)handleSetupRequest:(NSDictionary *)request connection:(MSShairportConnection *)connection response:(NSMutableDictionary *)response;
+- (void)handleSetParameterRequest:(NSDictionary *)request connection:(MSShairportConnection *)connection;
 - (NSString *)generateAppleResponseFromChallenge:(NSString *)challenge connection:(MSShairportConnection *)connection;
 - (NSString *)MACAddressToRawString;
 - (NSArray *)MACAddressComponents;
@@ -238,7 +239,7 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 		[connection.decoderInputFileHandle closeFile];
 		shouldClose = YES;
 	} else if([method hasPrefix:@"SET_PARAMETER"]) {
-		// TODO: pass along to hairtunes
+		[self handleSetParameterRequest:request connection:connection];
 	} else if([method hasPrefix:@"GET_PARAMETER"]) {
 		// TODO: it might be nice to return something here but shairtunes.pl doesn't
 	} else if([method hasPrefix:@"DENIED"]) {
@@ -366,6 +367,19 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 		
 	[response setObject:@"DEADBEEF" forKey:@"Session"];
 	[response setObject:[NSString stringWithFormat:@"%@;server_port=%@", transport, serverPort] forKey:@"Transport"];
+}
+
+- (void)handleSetParameterRequest:(NSDictionary *)request connection:(MSShairportConnection *)connection {
+	NSString *bodyString = [request objectForKey:@"Body"];
+	NSMutableDictionary *body = [NSMutableDictionary dictionary];
+	[bodyString enumerateLinesUsingBlock:^(NSString *line, BOOL *stop) {
+		NSArray *pieces = [line componentsSeparatedByString:@": "];
+		if(pieces.count >= 2) {				
+			[body setObject:[pieces objectAtIndex:1] forKey:[pieces objectAtIndex:0]];
+		}
+	}];
+	
+	[connection.decoderInputFileHandle writeData:[[NSString stringWithFormat:@"vol: %f\n", [body objectForKey:@"volume"]] dataUsingEncoding:NSASCIIStringEncoding]];
 }
 
 - (void)stop {
