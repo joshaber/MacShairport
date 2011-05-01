@@ -8,7 +8,7 @@ MacShairport is a native re-implementation of Shairport for Mac. That means any 
 Yes! Mostly. It seems to be pretty temperamental (underruns) depending on your network configuration but it does work. I'm hoping to improve that soon.
 
 ## How can I help?
-Like I mentioned above, the shairtunes server is written in Perl. I have practically zero experience with Perl but the implementation from [shairport.pl](https://github.com/albertz/shairport/blob/master/shairport.pl) has been serving as my guide in how the protocol works. So if you want to help, just dive right in.
+The biggest problem right now is that hairtunes underruns a lot depending on your network configuration. It'd be awesome if we could improve that.
 
 ## License
 New BSD License. See LICENSE.txt. Basically, do whatever you want with it but don't blame me for anything that goes wrong and don't remove my license.
