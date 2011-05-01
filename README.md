@@ -9,3 +9,6 @@ Well... kinda. It's not quite done. Right now it will advertise itself as a spea
 
 ## How can I help?
 Like I mentioned above, the shairtunes server is written in Perl. I have practically zero experience with Perl but the implementation from [shairport.pl](https://github.com/albertz/shairport/blob/master/shairport.pl) has been serving as my guide in how the protocol works. So if you want to help, just dive right in.
+
+## License
+New BSD License. See LICENSE.txt. Basically, do whatever you want with it but don't blame me for anything that goes wrong and don't remove my license.
