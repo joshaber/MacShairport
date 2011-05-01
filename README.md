@@ -5,7 +5,7 @@
 MacShairport is a native re-implementation of Shairport for Mac. That means any Mac user could download a build and run it on their computer without having to worry about Perl modules and dependencies. Win.
 
 ## Does it work?
-Well... kinda. It's not quite done. Right now it will advertise itself as a speaker and do all the necessary handshaking to let another computer's iTunes send it music to play. That's arguably the hard part. What remains now is launching hairtunes to accept the stream from the other iTunes.
+Yes! Mostly. It seems to be pretty temperamental (underruns) depending on your network configuration but it does work. I'm hoping to improve that soon.
 
 ## How can I help?
 Like I mentioned above, the shairtunes server is written in Perl. I have practically zero experience with Perl but the implementation from [shairport.pl](https://github.com/albertz/shairport/blob/master/shairport.pl) has been serving as my guide in how the protocol works. So if you want to help, just dive right in.
