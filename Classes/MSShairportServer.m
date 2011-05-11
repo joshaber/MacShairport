@@ -379,7 +379,7 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 		}
 	}];
 	
-	[connection.decoderInputFileHandle writeData:[[NSString stringWithFormat:@"vol: %f\n", [body objectForKey:@"volume"]] dataUsingEncoding:NSASCIIStringEncoding]];
+	[connection.decoderInputFileHandle writeData:[[NSString stringWithFormat:@"vol: %f\n", [[body objectForKey:@"volume"] floatValue]] dataUsingEncoding:NSASCIIStringEncoding]];
 }
 
 - (void)stop {
