@@ -10,7 +10,11 @@
 #import "MSShairportServer.h"
 
 
-@interface MacShairportAppDelegate : NSObject <NSApplicationDelegate, MSShairportServerDelegate> {}
+@interface MacShairportAppDelegate : NSObject <NSApplicationDelegate, MSShairportServerDelegate>
+{
+@private
+    NSWindow *window;
+}
 
 @property (assign) IBOutlet NSWindow *window;
 
