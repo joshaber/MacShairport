@@ -436,36 +436,51 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 	NSMutableString *challengeString = [[[NSString alloc] initWithData:challengeData encoding:NSISOLatin1StringEncoding] mutableCopy];
 	
 	// connection.remoteIP = fe80::5a55:caff:fef3:1499
-	NSArray *ipPieces = [connection.remoteIP componentsSeparatedByString:@"::"];
-	// ipPieces = [fe80, 5a55:caff:fef3:1499
-	
-	NSArray *leftPieces = [[ipPieces objectAtIndex:0] componentsSeparatedByString:@":"];
-	NSArray *rightPieces = [[ipPieces objectAtIndex:1] componentsSeparatedByString:@":"];
-	// left = [fe80], right = [5a55, caff, fef3, 1499]
-	
-	// most IPv6 address will be abbreviated, iTunes wants the full address so we'll expand it out
-	NSMutableArray *paddingPieces = [NSMutableArray array];
-	NSUInteger padding = 8 - (leftPieces.count + rightPieces.count);
-	for(NSUInteger i = 0; i < padding; i++) {
-		[paddingPieces addObject:@"0x0"];
-	}
-	
-	NSMutableArray *allPieces = [NSMutableArray array];
-	[allPieces addObjectsFromArray:leftPieces];
-	[allPieces addObjectsFromArray:paddingPieces];
-	[allPieces addObjectsFromArray:rightPieces];
-	
-	for(NSString *piece in allPieces) {
-		unsigned short value = (unsigned short) [piece decimalValueFromHex];
-		value = (unsigned short) CFSwapInt16HostToBig(value);
-		[challengeString appendFormat:[[NSString alloc] initWithData:[NSData dataWithBytes:&value length:sizeof(value)] encoding:NSISOLatin1StringEncoding]];
-	}
-	
+    if ([connection.remoteIP hasPrefix:@"::ffff:"]) {
+        NSString* ip4 = [connection.remoteIP substringFromIndex:7];
+        NSArray* pieces = [ip4 componentsSeparatedByString:@"."];
+        for(NSString* piece in pieces) {
+            unsigned short value = (unsigned short)[piece integerValue]; 
+            [challengeString appendFormat: @"%C", value];
+        }
+    } else {
+        NSArray *ipPieces = [connection.remoteIP componentsSeparatedByString:@"::"];
+        // ipPieces = [fe80, 5a55:caff:fef3:1499
+        
+        NSArray *leftPieces = [[ipPieces objectAtIndex:0] componentsSeparatedByString:@":"];
+        NSArray *rightPieces = [[ipPieces objectAtIndex:1] componentsSeparatedByString:@":"];
+        // left = [fe80], right = [5a55, caff, fef3, 1499]
+        
+        // most IPv6 address will be abbreviated, iTunes wants the full address so we'll expand it out
+        NSMutableArray *paddingPieces = [NSMutableArray array];
+        NSUInteger padding = 8 - (leftPieces.count + rightPieces.count);
+        for(NSUInteger i = 0; i < padding; i++) {
+            [paddingPieces addObject:@"0x0"];
+        }
+        
+        NSMutableArray *allPieces = [NSMutableArray array];
+        [allPieces addObjectsFromArray:leftPieces];
+        [allPieces addObjectsFromArray:paddingPieces];
+        [allPieces addObjectsFromArray:rightPieces];
+        
+        for(NSString *piece in allPieces) {
+            unsigned short value = (unsigned short) [piece decimalValueFromHex];
+            value = (unsigned short) CFSwapInt16HostToBig(value);
+            [challengeString appendFormat:[[NSString alloc] initWithData:[NSData dataWithBytes:&value length:sizeof(value)] encoding:NSISOLatin1StringEncoding]];
+        }
+    }
+    
 	NSArray *macComponents = [self MACAddressComponents];
 	for(NSString *component in macComponents) {
 		[challengeString appendFormat:@"%C", [component decimalValueFromHex]];
 	}
-	
+    
+    NSInteger len = 32 - [challengeString length];
+    while (len > 0) {
+        --len;
+        [challengeString appendFormat:@"%C", 0];
+    }
+    
 	[crypto setClearTextWithData:[challengeString dataUsingEncoding:NSISOLatin1StringEncoding]];
 	NSData *encryptedTextData = [crypto sign];
 	
@@ -474,6 +489,7 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 	encryptedString = [encryptedString stringByReplacingOccurrencesOfString:@"=" withString:@""];
 	return encryptedString;
 }
+
 
 - (void)shutdownServer {
 	if(listeningSocket != NULL) {
