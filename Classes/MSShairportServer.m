@@ -437,28 +437,28 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 	
 	// connection.remoteIP = fe80::5a55:caff:fef3:1499
     if ([connection.remoteIP hasPrefix:@"::ffff:"]) {
-        NSString* ip4 = [[connection.remoteIP substringFromIndex:7] autorelease];
-        NSArray* pieces = [[ip4 componentsSeparatedByString:@"."] autorelease];
+        NSString* ip4 = [connection.remoteIP substringFromIndex:7];
+        NSArray* pieces = [ip4 componentsSeparatedByString:@"."];
         for(NSString* piece in pieces) {
             unsigned short value = (unsigned short)[piece integerValue]; 
             [challengeString appendFormat: @"%C", value];
         }
     } else {
-        NSArray *ipPieces = [[connection.remoteIP componentsSeparatedByString:@"::"] autorelease];
+        NSArray *ipPieces = [connection.remoteIP componentsSeparatedByString:@"::"];
         // ipPieces = [fe80, 5a55:caff:fef3:1499
         
-        NSArray *leftPieces = [[[ipPieces objectAtIndex:0] componentsSeparatedByString:@":"] autorelease];
-        NSArray *rightPieces = [[[ipPieces objectAtIndex:1] componentsSeparatedByString:@":"] autorelease];
+        NSArray *leftPieces = [[ipPieces objectAtIndex:0] componentsSeparatedByString:@":"];
+        NSArray *rightPieces = [[ipPieces objectAtIndex:1] componentsSeparatedByString:@":"];
         // left = [fe80], right = [5a55, caff, fef3, 1499]
         
         // most IPv6 address will be abbreviated, iTunes wants the full address so we'll expand it out
-        NSMutableArray *paddingPieces = [[NSMutableArray array] autorelease];
+        NSMutableArray *paddingPieces = [NSMutableArray array];
         NSUInteger padding = 8 - (leftPieces.count + rightPieces.count);
         for(NSUInteger i = 0; i < padding; i++) {
             [paddingPieces addObject:@"0x0"];
         }
         
-        NSMutableArray *allPieces = [[NSMutableArray array] autorelease];
+        NSMutableArray *allPieces = [NSMutableArray array];
         [allPieces addObjectsFromArray:leftPieces];
         [allPieces addObjectsFromArray:paddingPieces];
         [allPieces addObjectsFromArray:rightPieces];
@@ -470,12 +470,12 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
         }
     }
     
-	NSArray *macComponents = [[self MACAddressComponents] autorelease];
+	NSArray *macComponents = [self MACAddressComponents];
 	for(NSString *component in macComponents) {
 		[challengeString appendFormat:@"%C", [component decimalValueFromHex]];
 	}
     
-    NSUInteger len = 32 - [challengeString length];
+    NSInteger len = 32 - [challengeString length];
     while (len > 0) {
         --len;
         [challengeString appendFormat:@"%C", 0];
@@ -484,7 +484,7 @@ static void serverAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, 
 	[crypto setClearTextWithData:[challengeString dataUsingEncoding:NSISOLatin1StringEncoding]];
 	NSData *encryptedTextData = [crypto sign];
 	
-	NSString *encryptedString = [[encryptedTextData base64EncodedString] autorelease];
+	NSString *encryptedString = [encryptedTextData base64EncodedString];
 	encryptedString = [encryptedString stringByReplacingOccurrencesOfString:@"\r\n" withString:@""];
 	encryptedString = [encryptedString stringByReplacingOccurrencesOfString:@"=" withString:@""];
 	return encryptedString;
